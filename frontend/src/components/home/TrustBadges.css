@@ -1,0 +1,92 @@
+.trust-badges-section {
+  padding: 2rem 0;
+  background: var(--white);
+}
+
+.trust-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-200);
+  transition: all var(--transition);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.trust-badge:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-green);
+}
+
+.trust-icon {
+  font-size: 1.75rem;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.trust-icon-green {
+  background: var(--primary-green-lighter);
+  color: var(--primary-green-dark);
+}
+
+.trust-icon-gold {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+.trust-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+/* Staggered animation */
+.trust-badge:nth-child(1) { animation-delay: 0.1s; }
+.trust-badge:nth-child(2) { animation-delay: 0.2s; }
+.trust-badge:nth-child(3) { animation-delay: 0.3s; }
+.trust-badge:nth-child(4) { animation-delay: 0.4s; }
+.trust-badge:nth-child(5) { animation-delay: 0.5s; }
+.trust-badge:nth-child(6) { animation-delay: 0.6s; }
+
+@media (max-width: 768px) {
+  .trust-badges {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .trust-badge {
+    padding: 0.75rem;
+  }
+
+  .trust-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+  }
+
+  .trust-text {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .trust-badges {
+    grid-template-columns: 1fr;
+  }
+}
