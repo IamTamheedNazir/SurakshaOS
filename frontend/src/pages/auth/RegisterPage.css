@@ -1,0 +1,359 @@
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+  padding: 2rem 1rem;
+}
+
+.register-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1400px;
+  width: 100%;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Info Section */
+.register-info-section {
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+  color: var(--white);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.register-info-content {
+  position: relative;
+  z-index: 2;
+  max-width: 500px;
+}
+
+.info-icon {
+  font-size: 5rem;
+  margin-bottom: 2rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.info-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.info-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  opacity: 0.95;
+  margin-bottom: 2.5rem;
+}
+
+.info-benefits {
+  margin-bottom: 2.5rem;
+}
+
+.benefits-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--gold);
+}
+
+.benefit-item {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.benefit-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--gold);
+  color: var(--primary-green-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 1.125rem;
+}
+
+.benefit-item strong {
+  display: block;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.benefit-item p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.info-quote {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.info-quote .arabic-text {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--gold-light);
+  font-weight: 700;
+}
+
+.quote-translation {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+/* Form Section */
+.register-form-section {
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.register-form-content {
+  max-width: 550px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.register-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  margin-bottom: 2rem;
+  transition: transform var(--transition);
+}
+
+.register-logo:hover {
+  transform: scale(1.05);
+}
+
+.register-logo .logo-icon {
+  font-size: 2.5rem;
+  color: var(--primary-green);
+}
+
+.register-logo .logo-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.register-logo .logo-main {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--primary-green);
+}
+
+.register-logo .logo-version {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.register-header {
+  margin-bottom: 2rem;
+}
+
+.register-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.register-subtitle {
+  font-size: 1rem;
+  color: var(--gray-600);
+}
+
+/* User Type Selector */
+.user-type-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.user-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: var(--gray-50);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.user-type-btn:hover {
+  background: var(--primary-green-lighter);
+  border-color: var(--primary-green);
+}
+
+.user-type-btn.active {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+  color: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+
+.type-icon {
+  font-size: 2rem;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: opacity var(--transition);
+}
+
+.password-toggle:hover {
+  opacity: 0.7;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.checkbox-label a {
+  color: var(--primary-green);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.checkbox-label a:hover {
+  text-decoration: underline;
+}
+
+.register-form .btn {
+  margin-top: 0.5rem;
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.register-footer p {
+  color: var(--gray-600);
+  font-size: 0.95rem;
+}
+
+.login-link {
+  color: var(--primary-green);
+  text-decoration: none;
+  font-weight: 700;
+  transition: color var(--transition);
+}
+
+.login-link:hover {
+  color: var(--primary-green-dark);
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .register-container {
+    grid-template-columns: 1fr;
+  }
+
+  .register-info-section {
+    display: none;
+  }
+
+  .register-form-section {
+    padding: 2rem;
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .register-page {
+    padding: 1rem;
+  }
+
+  .register-form-section {
+    padding: 1.5rem;
+  }
+
+  .register-title {
+    font-size: 1.75rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .user-type-selector {
+    grid-template-columns: 1fr;
+  }
+}
