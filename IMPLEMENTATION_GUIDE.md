@@ -1,737 +1,608 @@
 # UmrahConnect 2.0 - Complete Implementation Guide
 
 ## 🎯 PROJECT OVERVIEW
-A comprehensive Umrah marketplace platform connecting customers with travel vendors, featuring package management, booking system, CRM, payments, and analytics.
+A comprehensive Umrah marketplace platform connecting customers with travel vendors, featuring package management, booking system, CRM, payments, analytics, **multi-gateway payments**, **role-based access control**, **support ticket system**, **social authentication**, and **cloud storage management**.
 
 ---
 
-## 📁 FRONTEND - COMPLETE FILE STRUCTURE (99 Files)
+## 📁 FRONTEND - COMPLETE FILE STRUCTURE (108 Files)
 
-### **Phase 1: Homepage (9 Components)**
+### **NEW ADDITIONS:**
+
+#### **Payment Gateway System (3 Files)**
 ```
-frontend/src/
-├── pages/
-│   └── home/
-│       ├── HomePage.js
-│       └── HomePage.css
-├── components/
-│   └── home/
-│       ├── HeroSection.js
-│       ├── HeroSection.css
-│       ├── FeaturedPackages.js
-│       ├── FeaturedPackages.css
-│       ├── WhyChooseUs.js
-│       ├── WhyChooseUs.css
-│       ├── HowItWorks.js
-│       ├── HowItWorks.css
-│       ├── Testimonials.js
-│       ├── Testimonials.css
-│       ├── PopularDestinations.js
-│       ├── PopularDestinations.css
-│       ├── TravelGuide.js
-│       ├── TravelGuide.css
-│       ├── Newsletter.js
-│       ├── Newsletter.css
-│       ├── Footer.js
-│       └── Footer.css
+frontend/src/components/payment/
+├── PaymentGateway.js          # Multi-gateway payment component
+└── PaymentGateway.css
 ```
 
-### **Phase 2: Authentication (6 Components)**
+#### **Admin Panel (8 Files)**
 ```
-├── pages/
-│   └── auth/
-│       ├── Login.js
-│       ├── Login.css
-│       ├── Register.js
-│       ├── Register.css
-│       ├── ForgotPassword.js
-│       └── ForgotPassword.css
-```
-
-### **Phase 3: Package System (12 Components)**
-```
-├── pages/
-│   └── packages/
-│       ├── PackageListing.js
-│       ├── PackageListing.css
-│       ├── PackageDetails.js
-│       ├── PackageDetails.css
-│       ├── BookingFlow.js
-│       └── BookingFlow.css
-├── components/
-│   └── packages/
-│       ├── PackageCard.js
-│       ├── PackageCard.css
-│       ├── PackageFilters.js
-│       ├── PackageFilters.css
-│       ├── PackageTabs.js
-│       └── PackageTabs.css
+frontend/src/pages/admin/
+├── AdminPaymentSettings.js    # Payment gateway management
+├── AdminPaymentSettings.css
+├── AdminRoleManagement.js     # Role & permission system
+├── AdminRoleManagement.css
+├── SupportTicketSystem.js     # Support ticket management
+├── SupportTicketSystem.css
+├── CloudStorageSettings.js    # Cloud storage management
+└── CloudStorageSettings.css
 ```
 
-### **Phase 4: Customer Dashboard (10 Components)**
+#### **Authentication (2 Files)**
 ```
-├── pages/
-│   └── customer/
-│       ├── CustomerDashboard.js
-│       ├── CustomerDashboard.css
-│       ├── MyBookings.js
-│       ├── MyBookings.css
-│       ├── MyPayments.js
-│       ├── MyPayments.css
-│       ├── MyDocuments.js
-│       ├── MyDocuments.css
-│       ├── MyProfile.js
-│       └── MyProfile.css
-```
-
-### **Phase 5: Vendor Dashboard (62 Components)**
-```
-├── pages/
-│   └── vendor/
-│       ├── VendorDashboard.js
-│       ├── VendorDashboard.css
-│       ├── NewRequest.js
-│       ├── NewRequest.css
-│       ├── RequestManagement.js
-│       ├── RequestManagement.css
-│       ├── ItineraryGenerator.js
-│       ├── ItineraryGenerator.css
-│       ├── PackageManagement.js
-│       ├── PackageManagement.css
-│       ├── CreatePackage.js
-│       ├── CreatePackage.css
-│       ├── CRMSystem.js
-│       ├── CRMSystem.css
-│       ├── PaymentsAccounting.js
-│       ├── PaymentsAccounting.css
-│       ├── ReportsAnalytics.js
-│       └── ReportsAnalytics.css
+frontend/src/components/auth/
+├── SocialLogin.js             # Social login component
+└── SocialLogin.css
 ```
 
 ---
 
-## 🗄️ DATABASE SCHEMA - COMPLETE STRUCTURE
+## 💳 PAYMENT GATEWAY SYSTEM
 
-### **1. Users Table**
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  role ENUM('customer', 'vendor', 'admin') NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  phone VARCHAR(20),
-  whatsapp VARCHAR(20),
-  profile_image TEXT,
-  status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
-  email_verified BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  last_login TIMESTAMP,
-  INDEX idx_email (email),
-  INDEX idx_role (role),
-  INDEX idx_status (status)
-);
-```
+### **Supported Payment Gateways:**
 
-### **2. Vendors Table**
+1. **Razorpay** 💳
+   - Credit/Debit Cards
+   - UPI
+   - Net Banking
+   - Wallets
+   - Processing Fee: 2.0%
+
+2. **Stripe** 💰
+   - International Cards
+   - Apple Pay
+   - Google Pay
+   - Processing Fee: 2.5%
+
+3. **PayPal** 🅿️
+   - PayPal Balance
+   - Cards
+   - Processing Fee: 3.0%
+
+4. **Bank Transfer** 🏦
+   - NEFT/RTGS/IMPS
+   - Direct Bank Details Display
+   - UPI with QR Code
+   - Receipt Upload
+   - Processing Fee: 0%
+
+5. **UPI** 📱
+   - Google Pay
+   - PhonePe
+   - Paytm
+   - Processing Fee: 0%
+
+6. **Cash Payment** 💵
+   - Pay at Office
+   - Processing Fee: 0%
+
+### **Payment Gateway Features:**
+- ✅ Dynamic gateway configuration
+- ✅ Admin can enable/disable gateways
+- ✅ API key management
+- ✅ Processing fee configuration
+- ✅ Test/Live mode toggle
+- ✅ Webhook configuration
+- ✅ Transaction tracking
+- ✅ Receipt generation
+- ✅ Refund management
+
+---
+
+## 🔐 ADMIN ROLE & PERMISSION SYSTEM
+
+### **Predefined Roles:**
+
+1. **Super Admin** 🔴
+   - Full system access
+   - All permissions (CRUD)
+   - Cannot be deleted
+   - System role
+
+2. **Admin** 🟠
+   - Administrative access
+   - Most permissions
+   - Limited delete access
+   - System role
+
+3. **Sales Manager** 🟢
+   - Manage bookings & customers
+   - Package management
+   - Sales operations
+   - Custom role
+
+4. **Support Agent** 🔵
+   - Handle support tickets
+   - View bookings & customers
+   - Limited edit access
+   - Custom role
+
+5. **Accountant** 🟣
+   - Manage payments & invoices
+   - Financial reports
+   - View-only for other modules
+   - Custom role
+
+### **Permission Modules:**
+- Dashboard (View, Create, Edit, Delete)
+- Users (View, Create, Edit, Delete)
+- Vendors (View, Create, Edit, Delete)
+- Packages (View, Create, Edit, Delete)
+- Bookings (View, Create, Edit, Delete)
+- Payments (View, Create, Edit, Delete)
+- Reports (View, Create, Edit, Delete)
+- Settings (View, Create, Edit, Delete)
+- Roles (View, Create, Edit, Delete)
+- Support (View, Create, Edit, Delete)
+
+### **Role Management Features:**
+- ✅ Create custom roles
+- ✅ Granular permissions (VCUD)
+- ✅ Assign roles to team members
+- ✅ Role-based access control
+- ✅ Activity logging
+- ✅ Team member management
+- ✅ Invite system
+- ✅ Status management (Active/Inactive)
+
+---
+
+## 🎫 SUPPORT TICKET SYSTEM
+
+### **Ticket Categories:**
+- Payment 💰
+- Booking 📋
+- Visa 📄
+- Package 📦
+- Technical 🔧
+- Other ❓
+
+### **Priority Levels:**
+- Low (Green)
+- Medium (Orange)
+- High (Red)
+- Urgent (Dark Red)
+
+### **Ticket Status:**
+- Open (Blue)
+- In Progress (Orange)
+- Resolved (Green)
+- Closed (Gray)
+
+### **Support Features:**
+- ✅ Create & manage tickets
+- ✅ Real-time messaging
+- ✅ File attachments
+- ✅ Ticket assignment
+- ✅ Priority management
+- ✅ Status tracking
+- ✅ Customer information
+- ✅ Response templates
+- ✅ Email notifications
+- ✅ Activity timeline
+- ✅ Search & filters
+- ✅ SLA tracking
+
+---
+
+## 🔑 SOCIAL AUTHENTICATION
+
+### **Supported Login Methods:**
+
+1. **Google Login** 🔴
+   - OAuth 2.0
+   - One-click login
+   - Profile sync
+
+2. **Facebook Login** 🔵
+   - Facebook SDK
+   - Profile import
+   - Friend connections
+
+3. **Apple Login** ⚫
+   - Sign in with Apple
+   - Privacy-focused
+   - Email masking
+
+4. **Phone Login** 📱
+   - OTP verification
+   - SMS/WhatsApp
+   - 6-digit code
+   - Country code support
+
+5. **Twitter/X Login** ⚫
+   - OAuth integration
+   - Profile sync
+
+6. **LinkedIn Login** 🔵
+   - Professional network
+   - Profile import
+
+### **Authentication Features:**
+- ✅ Multiple login options
+- ✅ Account linking
+- ✅ Profile synchronization
+- ✅ Email verification
+- ✅ Phone verification
+- ✅ Two-factor authentication
+- ✅ Session management
+- ✅ Remember me
+- ✅ Logout from all devices
+
+---
+
+## ☁️ CLOUD STORAGE MANAGEMENT
+
+### **Supported Storage Providers:**
+
+1. **Amazon S3** ☁️
+   - AWS Simple Storage Service
+   - Global CDN
+   - Scalable storage
+   - Configuration:
+     - Access Key ID
+     - Secret Access Key
+     - Region
+     - Bucket Name
+     - Endpoint
+
+2. **Wasabi** 🗄️
+   - Hot Cloud Storage
+   - S3-compatible
+   - Lower cost
+   - Configuration:
+     - Access Key ID
+     - Secret Access Key
+     - Region
+     - Bucket Name
+     - Endpoint
+
+3. **Cloudinary** 🖼️
+   - Image & Video Management
+   - Auto-optimization
+   - Transformations
+   - Configuration:
+     - Cloud Name
+     - API Key
+     - API Secret
+     - Upload Preset
+
+4. **DigitalOcean Spaces** 🌊
+   - Object Storage
+   - S3-compatible
+   - Built-in CDN
+   - Configuration:
+     - Access Key ID
+     - Secret Access Key
+     - Region
+     - Space Name
+     - Endpoint
+
+5. **Backblaze B2** 💾
+   - Cloud Storage
+   - Cost-effective
+   - S3-compatible
+   - Configuration:
+     - Application Key ID
+     - Application Key
+     - Bucket ID
+     - Bucket Name
+
+6. **Google Cloud Storage** ☁️
+   - Google Cloud Platform
+   - Global infrastructure
+   - Configuration:
+     - Project ID
+     - Service Account Key
+     - Bucket Name
+
+### **Storage Features:**
+- ✅ Multiple provider support
+- ✅ Dynamic provider switching
+- ✅ Default provider selection
+- ✅ File categorization
+- ✅ Auto-optimization
+- ✅ Thumbnail generation
+- ✅ CDN integration
+- ✅ Bandwidth tracking
+- ✅ Cost monitoring
+- ✅ File sync
+- ✅ Connection testing
+- ✅ Upload limits
+- ✅ Format restrictions
+- ✅ Storage analytics
+
+### **File Categories:**
+- Package Images → Cloudinary
+- User Documents → AWS S3
+- Invoices & Receipts → AWS S3
+- Backups → Wasabi
+
+---
+
+## 🗄️ DATABASE SCHEMA - UPDATED
+
+### **16. Payment Gateways Table**
 ```sql
-CREATE TABLE vendors (
+CREATE TABLE payment_gateways (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL,
-  company_name VARCHAR(255) NOT NULL,
-  company_registration VARCHAR(100),
-  agency_id VARCHAR(50) UNIQUE,
-  license_number VARCHAR(100),
-  address TEXT,
-  city VARCHAR(100),
-  state VARCHAR(100),
-  country VARCHAR(100) DEFAULT 'India',
-  pincode VARCHAR(10),
-  website VARCHAR(255),
+  gateway_id VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(50) UNIQUE NOT NULL,
+  icon VARCHAR(10),
   description TEXT,
-  logo TEXT,
-  banner_image TEXT,
-  rating DECIMAL(3,2) DEFAULT 0.00,
-  total_reviews INT DEFAULT 0,
-  total_bookings INT DEFAULT 0,
-  total_revenue DECIMAL(15,2) DEFAULT 0.00,
-  verification_status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
-  verification_documents JSON,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_user_id (user_id),
-  INDEX idx_agency_id (agency_id),
-  INDEX idx_verification_status (verification_status)
-);
-```
-
-### **3. Packages Table**
-```sql
-CREATE TABLE packages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  vendor_id UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  slug VARCHAR(255) UNIQUE NOT NULL,
-  category ENUM('Umrah', 'Hajj', 'Ziyarat', 'Ramzan', 'Holidays') NOT NULL,
-  type ENUM('Bronze', 'Silver', 'Gold', 'Platinum') NOT NULL,
-  duration INT NOT NULL,
-  makkah_days INT NOT NULL,
-  madinah_days INT NOT NULL,
-  departure_city VARCHAR(100) NOT NULL,
-  description TEXT,
-  highlights JSON,
+  enabled BOOLEAN DEFAULT TRUE,
+  is_default BOOLEAN DEFAULT FALSE,
+  test_mode BOOLEAN DEFAULT TRUE,
   
-  -- Pricing
-  base_price DECIMAL(10,2) NOT NULL,
-  discounted_price DECIMAL(10,2),
-  child_price DECIMAL(10,2),
-  infant_price DECIMAL(10,2),
-  single_room_supplement DECIMAL(10,2),
+  -- Configuration (encrypted JSON)
+  config JSON NOT NULL,
   
-  -- Accommodation
-  makkah_hotel JSON,
-  madinah_hotel JSON,
+  -- Fees
+  processing_fee DECIMAL(5,2) DEFAULT 0.00,
+  fixed_fee DECIMAL(10,2) DEFAULT 0.00,
+  pass_fee_to_customer BOOLEAN DEFAULT TRUE,
   
-  -- Inclusions & Exclusions
-  inclusions JSON,
-  exclusions JSON,
-  
-  -- Images
-  cover_image TEXT,
-  images JSON,
-  
-  -- Terms
-  terms TEXT,
-  cancellation_policy TEXT,
+  -- Supported features
+  supported_methods JSON,
+  supported_currencies JSON,
   
   -- Stats
-  views INT DEFAULT 0,
-  bookings INT DEFAULT 0,
-  rating DECIMAL(3,2) DEFAULT 0.00,
-  reviews_count INT DEFAULT 0,
-  
-  -- Status
-  status ENUM('draft', 'active', 'inactive', 'archived') DEFAULT 'draft',
+  total_transactions INT DEFAULT 0,
+  total_amount DECIMAL(15,2) DEFAULT 0.00,
   
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_category (category),
-  INDEX idx_type (type),
-  INDEX idx_status (status),
+  INDEX idx_gateway_id (gateway_id),
+  INDEX idx_enabled (enabled),
+  INDEX idx_is_default (is_default)
+);
+```
+
+### **17. Roles Table**
+```sql
+CREATE TABLE roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(50) UNIQUE NOT NULL,
+  description TEXT,
+  color VARCHAR(7),
+  is_system BOOLEAN DEFAULT FALSE,
+  permissions JSON NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_slug (slug),
-  FULLTEXT idx_search (name, description)
+  INDEX idx_is_system (is_system)
 );
 ```
 
-### **4. Requests/Bookings Table**
+### **18. User Roles Table**
 ```sql
-CREATE TABLE requests (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id VARCHAR(50) UNIQUE NOT NULL,
-  vendor_id UUID NOT NULL,
-  customer_id UUID NOT NULL,
-  package_id UUID NOT NULL,
-  
-  -- Service Details
-  service ENUM('Hajj', 'Umrah', 'Ziyarat', 'Ramzan', 'Holidays') NOT NULL,
-  umrah_type VARCHAR(100),
-  departure_city VARCHAR(100),
-  departure_month VARCHAR(20),
-  departure_date DATE,
-  return_date DATE,
-  pnr VARCHAR(50),
-  
-  -- Package Details
-  package_name VARCHAR(255),
-  package_type VARCHAR(50),
-  sharing_type VARCHAR(50),
-  
-  -- Travelers
-  adults INT DEFAULT 0,
-  children_with_bed INT DEFAULT 0,
-  children_no_bed INT DEFAULT 0,
-  infants INT DEFAULT 0,
-  total_travelers INT DEFAULT 0,
-  beds INT DEFAULT 0,
-  seats INT DEFAULT 0,
-  
-  -- Pricing
-  total_amount DECIMAL(10,2) NOT NULL,
-  paid_amount DECIMAL(10,2) DEFAULT 0.00,
-  pending_amount DECIMAL(10,2) NOT NULL,
-  
-  -- Status
-  status ENUM('pending_agent', 'confirmed', 'processing', 'completed', 'cancelled') DEFAULT 'pending_agent',
-  payment_status ENUM('pending', 'partial', 'completed') DEFAULT 'pending',
-  
-  -- Visa Tracking
-  visa_status ENUM('not_started', 'documents_pending', 'submitted', 'processing', 'approved', 'rejected', 'received') DEFAULT 'not_started',
-  
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL,
-  INDEX idx_request_id (request_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_customer_id (customer_id),
-  INDEX idx_status (status),
-  INDEX idx_payment_status (payment_status)
-);
-```
-
-### **5. Passengers Table**
-```sql
-CREATE TABLE passengers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id UUID NOT NULL,
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
-  date_of_birth DATE NOT NULL,
-  gender ENUM('male', 'female') NOT NULL,
-  passport_number VARCHAR(50),
-  passport_expiry DATE,
-  nationality VARCHAR(100),
-  phone VARCHAR(20),
-  email VARCHAR(255),
-  relationship VARCHAR(50),
-  is_primary BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
-  INDEX idx_request_id (request_id)
-);
-```
-
-### **6. Payments Table**
-```sql
-CREATE TABLE payments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  payment_id VARCHAR(50) UNIQUE NOT NULL,
-  request_id UUID NOT NULL,
-  vendor_id UUID NOT NULL,
-  customer_id UUID NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  payment_method ENUM('cash', 'bank_transfer', 'upi', 'credit_card', 'debit_card', 'cheque') NOT NULL,
-  transaction_id VARCHAR(100),
-  payment_gateway VARCHAR(50),
-  status ENUM('pending', 'processing', 'completed', 'failed', 'refunded') DEFAULT 'pending',
-  payment_date TIMESTAMP,
-  notes TEXT,
-  receipt_url TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_payment_id (payment_id),
-  INDEX idx_request_id (request_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_customer_id (customer_id),
-  INDEX idx_status (status)
-);
-```
-
-### **7. Expenses Table**
-```sql
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  expense_id VARCHAR(50) UNIQUE NOT NULL,
-  vendor_id UUID NOT NULL,
-  category ENUM('Hotel Booking', 'Flight Tickets', 'Transport', 'Marketing', 'Visa Processing', 'Staff Salary', 'Office Rent', 'Utilities', 'Other') NOT NULL,
-  description TEXT NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  payment_method ENUM('cash', 'bank_transfer', 'upi', 'credit_card', 'debit_card', 'cheque') NOT NULL,
-  vendor_name VARCHAR(255),
-  status ENUM('pending', 'paid') DEFAULT 'pending',
-  payment_date DATE,
-  receipt_url TEXT,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  INDEX idx_expense_id (expense_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_category (category),
-  INDEX idx_status (status)
-);
-```
-
-### **8. Invoices Table**
-```sql
-CREATE TABLE invoices (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  invoice_id VARCHAR(50) UNIQUE NOT NULL,
-  request_id UUID NOT NULL,
-  vendor_id UUID NOT NULL,
-  customer_id UUID NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  issue_date DATE NOT NULL,
-  due_date DATE NOT NULL,
-  paid_date DATE,
-  status ENUM('unpaid', 'partial', 'paid', 'overdue', 'cancelled') DEFAULT 'unpaid',
-  invoice_url TEXT,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_invoice_id (invoice_id),
-  INDEX idx_request_id (request_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_status (status)
-);
-```
-
-### **9. CRM Customers Table**
-```sql
-CREATE TABLE crm_customers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  vendor_id UUID NOT NULL,
-  user_id UUID,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255),
-  phone VARCHAR(20) NOT NULL,
-  whatsapp VARCHAR(20),
-  status ENUM('active', 'inactive', 'lead') DEFAULT 'active',
-  source ENUM('website', 'referral', 'social_media', 'phone', 'email', 'walk_in') NOT NULL,
-  total_bookings INT DEFAULT 0,
-  total_spent DECIMAL(15,2) DEFAULT 0.00,
-  last_booking_date DATE,
-  tags JSON,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_user_id (user_id),
-  INDEX idx_status (status),
-  INDEX idx_source (source)
-);
-```
-
-### **10. Leads Table**
-```sql
-CREATE TABLE leads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  lead_id VARCHAR(50) UNIQUE NOT NULL,
-  vendor_id UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255),
-  phone VARCHAR(20) NOT NULL,
-  source ENUM('website', 'referral', 'social_media', 'phone', 'email', 'walk_in') NOT NULL,
-  status ENUM('new', 'contacted', 'qualified', 'converted', 'lost') DEFAULT 'new',
-  interest VARCHAR(255),
-  budget VARCHAR(100),
-  travel_date DATE,
-  assigned_to VARCHAR(255),
-  notes TEXT,
-  last_contact_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  INDEX idx_lead_id (lead_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_status (status),
-  INDEX idx_source (source)
-);
-```
-
-### **11. Communications Table**
-```sql
-CREATE TABLE communications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  vendor_id UUID NOT NULL,
-  customer_id UUID,
-  lead_id UUID,
-  type ENUM('call', 'email', 'whatsapp', 'meeting', 'sms') NOT NULL,
-  subject VARCHAR(255) NOT NULL,
-  notes TEXT,
-  duration VARCHAR(50),
-  outcome ENUM('positive', 'neutral', 'negative'),
-  next_action VARCHAR(255),
-  next_action_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (customer_id) REFERENCES crm_customers(id) ON DELETE CASCADE,
-  FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE,
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_customer_id (customer_id),
-  INDEX idx_lead_id (lead_id),
-  INDEX idx_type (type)
-);
-```
-
-### **12. Itineraries Table**
-```sql
-CREATE TABLE itineraries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id UUID NOT NULL,
-  vendor_id UUID NOT NULL,
-  package_name VARCHAR(255) NOT NULL,
-  duration INT NOT NULL,
-  makkah_days INT NOT NULL,
-  madinah_days INT NOT NULL,
-  departure_city VARCHAR(100),
-  departure_date DATE,
-  return_date DATE,
-  days JSON NOT NULL,
-  inclusions JSON,
-  exclusions JSON,
-  important_notes JSON,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  INDEX idx_package_id (package_id),
-  INDEX idx_vendor_id (vendor_id)
-);
-```
-
-### **13. Documents Table**
-```sql
-CREATE TABLE documents (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  request_id UUID NOT NULL,
-  passenger_id UUID,
-  document_type ENUM('passport', 'photo', 'visa', 'vaccination', 'other') NOT NULL,
-  document_name VARCHAR(255) NOT NULL,
-  file_url TEXT NOT NULL,
-  file_size INT,
-  mime_type VARCHAR(100),
-  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-  uploaded_by UUID NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
-  FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
-  FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_request_id (request_id),
-  INDEX idx_passenger_id (passenger_id),
-  INDEX idx_document_type (document_type),
-  INDEX idx_status (status)
-);
-```
-
-### **14. Reviews Table**
-```sql
-CREATE TABLE reviews (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  package_id UUID NOT NULL,
-  vendor_id UUID NOT NULL,
-  customer_id UUID NOT NULL,
-  request_id UUID NOT NULL,
-  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  title VARCHAR(255),
-  review TEXT,
-  images JSON,
-  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-  helpful_count INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
-  FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
-  FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
-  INDEX idx_package_id (package_id),
-  INDEX idx_vendor_id (vendor_id),
-  INDEX idx_customer_id (customer_id),
-  INDEX idx_status (status)
-);
-```
-
-### **15. Notifications Table**
-```sql
-CREATE TABLE notifications (
+CREATE TABLE user_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL,
-  type ENUM('booking', 'payment', 'document', 'review', 'system') NOT NULL,
-  title VARCHAR(255) NOT NULL,
+  role_id UUID NOT NULL,
+  assigned_by UUID,
+  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+  FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE KEY unique_user_role (user_id, role_id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_role_id (role_id)
+);
+```
+
+### **19. Support Tickets Table**
+```sql
+CREATE TABLE support_tickets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  ticket_id VARCHAR(50) UNIQUE NOT NULL,
+  customer_id UUID NOT NULL,
+  assigned_to UUID,
+  subject VARCHAR(255) NOT NULL,
+  category ENUM('Payment', 'Booking', 'Visa', 'Package', 'Technical', 'Other') NOT NULL,
+  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+  status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMP,
+  FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_ticket_id (ticket_id),
+  INDEX idx_customer_id (customer_id),
+  INDEX idx_assigned_to (assigned_to),
+  INDEX idx_status (status),
+  INDEX idx_priority (priority)
+);
+```
+
+### **20. Ticket Messages Table**
+```sql
+CREATE TABLE ticket_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  ticket_id UUID NOT NULL,
+  sender_id UUID NOT NULL,
+  sender_type ENUM('customer', 'agent') NOT NULL,
   message TEXT NOT NULL,
-  link TEXT,
-  is_read BOOLEAN DEFAULT FALSE,
+  attachments JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_ticket_id (ticket_id),
+  INDEX idx_sender_id (sender_id)
+);
+```
+
+### **21. Social Logins Table**
+```sql
+CREATE TABLE social_logins (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  provider ENUM('google', 'facebook', 'apple', 'phone', 'twitter', 'linkedin') NOT NULL,
+  provider_id VARCHAR(255) NOT NULL,
+  provider_email VARCHAR(255),
+  provider_data JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_provider (provider, provider_id),
+  INDEX idx_user_id (user_id),
+  INDEX idx_provider (provider)
+);
+```
+
+### **22. Storage Providers Table**
+```sql
+CREATE TABLE storage_providers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  provider_id VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(50) UNIQUE NOT NULL,
+  description TEXT,
+  enabled BOOLEAN DEFAULT TRUE,
+  is_default BOOLEAN DEFAULT FALSE,
+  config JSON NOT NULL,
+  stats JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_provider_id (provider_id),
+  INDEX idx_enabled (enabled),
+  INDEX idx_is_default (is_default)
+);
+```
+
+### **23. File Uploads Table**
+```sql
+CREATE TABLE file_uploads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  provider_id VARCHAR(50) NOT NULL,
+  category VARCHAR(100),
+  file_name VARCHAR(255) NOT NULL,
+  file_path TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  file_size BIGINT,
+  mime_type VARCHAR(100),
+  width INT,
+  height INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_user_id (user_id),
-  INDEX idx_is_read (is_read),
+  INDEX idx_provider_id (provider_id),
+  INDEX idx_category (category)
+);
+```
+
+### **24. Activity Logs Table**
+```sql
+CREATE TABLE activity_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  action VARCHAR(100) NOT NULL,
+  entity_type VARCHAR(50),
+  entity_id VARCHAR(100),
+  description TEXT,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  metadata JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_id (user_id),
+  INDEX idx_action (action),
+  INDEX idx_entity (entity_type, entity_id),
   INDEX idx_created_at (created_at)
 );
 ```
 
 ---
 
-## 🔧 BACKEND API ENDPOINTS - COMPLETE LIST
+## 🔧 BACKEND API ENDPOINTS - UPDATED (150+ Endpoints)
 
-### **Authentication APIs**
+### **Payment Gateway APIs**
 ```
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
-POST   /api/auth/forgot-password
-POST   /api/auth/reset-password
-POST   /api/auth/verify-email
-GET    /api/auth/me
-PUT    /api/auth/update-profile
-PUT    /api/auth/change-password
-```
-
-### **Package APIs**
-```
-GET    /api/packages
-GET    /api/packages/:id
-POST   /api/packages (vendor only)
-PUT    /api/packages/:id (vendor only)
-DELETE /api/packages/:id (vendor only)
-GET    /api/packages/search
-GET    /api/packages/featured
-GET    /api/packages/vendor/:vendorId
-POST   /api/packages/:id/duplicate (vendor only)
+GET    /api/admin/payment-gateways
+GET    /api/admin/payment-gateways/:id
+POST   /api/admin/payment-gateways
+PUT    /api/admin/payment-gateways/:id
+DELETE /api/admin/payment-gateways/:id
+PUT    /api/admin/payment-gateways/:id/toggle
+PUT    /api/admin/payment-gateways/:id/set-default
+POST   /api/admin/payment-gateways/:id/test
+GET    /api/payment-gateways/active
+POST   /api/payments/process/:gateway
+POST   /api/payments/webhook/:gateway
 ```
 
-### **Request/Booking APIs**
+### **Role & Permission APIs**
 ```
-GET    /api/requests
-GET    /api/requests/:id
-POST   /api/requests
-PUT    /api/requests/:id
-DELETE /api/requests/:id
-GET    /api/requests/vendor/:vendorId
-GET    /api/requests/customer/:customerId
-PUT    /api/requests/:id/status
-PUT    /api/requests/:id/visa-status
-```
-
-### **Passenger APIs**
-```
-GET    /api/passengers/request/:requestId
-POST   /api/passengers
-PUT    /api/passengers/:id
-DELETE /api/passengers/:id
+GET    /api/admin/roles
+GET    /api/admin/roles/:id
+POST   /api/admin/roles
+PUT    /api/admin/roles/:id
+DELETE /api/admin/roles/:id
+GET    /api/admin/roles/:id/permissions
+PUT    /api/admin/roles/:id/permissions
+GET    /api/admin/team-members
+POST   /api/admin/team-members/invite
+PUT    /api/admin/team-members/:id/role
+PUT    /api/admin/team-members/:id/status
+DELETE /api/admin/team-members/:id
+GET    /api/admin/activity-logs
 ```
 
-### **Payment APIs**
+### **Support Ticket APIs**
 ```
-GET    /api/payments
-GET    /api/payments/:id
-POST   /api/payments
-GET    /api/payments/request/:requestId
-GET    /api/payments/vendor/:vendorId
-GET    /api/payments/customer/:customerId
-POST   /api/payments/:id/receipt
-```
-
-### **Expense APIs**
-```
-GET    /api/expenses
-GET    /api/expenses/:id
-POST   /api/expenses
-PUT    /api/expenses/:id
-DELETE /api/expenses/:id
-GET    /api/expenses/vendor/:vendorId
-GET    /api/expenses/category/:category
+GET    /api/support/tickets
+GET    /api/support/tickets/:id
+POST   /api/support/tickets
+PUT    /api/support/tickets/:id
+DELETE /api/support/tickets/:id
+PUT    /api/support/tickets/:id/status
+PUT    /api/support/tickets/:id/priority
+PUT    /api/support/tickets/:id/assign
+GET    /api/support/tickets/:id/messages
+POST   /api/support/tickets/:id/messages
+POST   /api/support/tickets/:id/attachments
+GET    /api/support/stats
 ```
 
-### **Invoice APIs**
+### **Social Authentication APIs**
 ```
-GET    /api/invoices
-GET    /api/invoices/:id
-POST   /api/invoices
-PUT    /api/invoices/:id
-DELETE /api/invoices/:id
-GET    /api/invoices/request/:requestId
-GET    /api/invoices/vendor/:vendorId
-POST   /api/invoices/:id/send-email
-POST   /api/invoices/:id/download
-```
-
-### **CRM APIs**
-```
-GET    /api/crm/customers
-GET    /api/crm/customers/:id
-POST   /api/crm/customers
-PUT    /api/crm/customers/:id
-DELETE /api/crm/customers/:id
-GET    /api/crm/customers/vendor/:vendorId
-
-GET    /api/crm/leads
-GET    /api/crm/leads/:id
-POST   /api/crm/leads
-PUT    /api/crm/leads/:id
-DELETE /api/crm/leads/:id
-PUT    /api/crm/leads/:id/convert
-
-GET    /api/crm/communications
-POST   /api/crm/communications
-GET    /api/crm/communications/customer/:customerId
+POST   /api/auth/google
+POST   /api/auth/facebook
+POST   /api/auth/apple
+POST   /api/auth/twitter
+POST   /api/auth/linkedin
+POST   /api/auth/phone/send-otp
+POST   /api/auth/phone/verify-otp
+GET    /api/auth/social-accounts
+DELETE /api/auth/social-accounts/:provider
+POST   /api/auth/link-account
 ```
 
-### **Itinerary APIs**
+### **Cloud Storage APIs**
 ```
-GET    /api/itineraries/package/:packageId
-POST   /api/itineraries
-PUT    /api/itineraries/:id
-DELETE /api/itineraries/:id
-POST   /api/itineraries/:id/generate-pdf
-POST   /api/itineraries/:id/send-email
-```
-
-### **Document APIs**
-```
-GET    /api/documents/request/:requestId
-POST   /api/documents/upload
-DELETE /api/documents/:id
-PUT    /api/documents/:id/status
-```
-
-### **Review APIs**
-```
-GET    /api/reviews/package/:packageId
-POST   /api/reviews
-PUT    /api/reviews/:id
-DELETE /api/reviews/:id
-POST   /api/reviews/:id/helpful
-```
-
-### **Analytics APIs**
-```
-GET    /api/analytics/vendor/:vendorId/overview
-GET    /api/analytics/vendor/:vendorId/revenue
-GET    /api/analytics/vendor/:vendorId/bookings
-GET    /api/analytics/vendor/:vendorId/customers
-GET    /api/analytics/vendor/:vendorId/packages
-GET    /api/analytics/vendor/:vendorId/sources
-```
-
-### **Notification APIs**
-```
-GET    /api/notifications
-PUT    /api/notifications/:id/read
-PUT    /api/notifications/read-all
-DELETE /api/notifications/:id
-```
-
-### **Vendor APIs**
-```
-GET    /api/vendors
-GET    /api/vendors/:id
-PUT    /api/vendors/:id
-GET    /api/vendors/:id/stats
-PUT    /api/vendors/:id/verification
+GET    /api/admin/storage-providers
+GET    /api/admin/storage-providers/:id
+POST   /api/admin/storage-providers
+PUT    /api/admin/storage-providers/:id
+DELETE /api/admin/storage-providers/:id
+PUT    /api/admin/storage-providers/:id/toggle
+PUT    /api/admin/storage-providers/:id/set-default
+POST   /api/admin/storage-providers/:id/test
+POST   /api/admin/storage-providers/:id/sync
+POST   /api/upload
+POST   /api/upload/:category
+DELETE /api/files/:id
+GET    /api/files/stats
 ```
 
 ---
 
-## 📦 REQUIRED NPM PACKAGES
+## 📦 REQUIRED NPM PACKAGES - UPDATED
 
 ### **Frontend Dependencies**
 ```json
@@ -748,13 +619,10 @@ PUT    /api/vendors/:id/verification
     "framer-motion": "^10.16.16",
     "react-hook-form": "^7.49.2",
     "yup": "^1.3.3",
-    "zustand": "^4.4.7"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.8",
-    "eslint": "^8.55.0",
-    "prettier": "^3.1.1"
+    "zustand": "^4.4.7",
+    "@react-oauth/google": "^0.12.1",
+    "react-facebook-login": "^4.1.1",
+    "react-apple-login": "^1.1.6"
   }
 }
 ```
@@ -777,26 +645,24 @@ PUT    /api/vendors/:id/verification
     "uuid": "^9.0.1",
     "moment": "^2.30.1",
     "pdfkit": "^0.13.0",
-    "razorpay": "^2.9.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2",
-    "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "razorpay": "^2.9.2",
+    "stripe": "^14.10.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
+    "aws-sdk": "^2.1520.0",
+    "cloudinary": "^1.41.1",
+    "firebase-admin": "^12.0.0",
+    "twilio": "^4.20.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-facebook": "^3.0.0",
+    "passport-apple": "^2.0.2"
   }
 }
 ```
 
 ---
 
-## 🔐 ENVIRONMENT VARIABLES
-
-### **Frontend (.env)**
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_APP_NAME=UmrahConnect
-VITE_RAZORPAY_KEY=your_razorpay_key
-```
+## 🔐 ENVIRONMENT VARIABLES - UPDATED
 
 ### **Backend (.env)**
 ```env
@@ -821,13 +687,50 @@ SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
 
-# File Upload
-MAX_FILE_SIZE=5242880
-UPLOAD_PATH=./uploads
+# Payment Gateways
+RAZORPAY_KEY_ID=rzp_live_***
+RAZORPAY_KEY_SECRET=***
+STRIPE_SECRET_KEY=sk_live_***
+STRIPE_WEBHOOK_SECRET=whsec_***
+PAYPAL_CLIENT_ID=***
+PAYPAL_CLIENT_SECRET=***
 
-# Payment Gateway
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+# Social Authentication
+GOOGLE_CLIENT_ID=***
+GOOGLE_CLIENT_SECRET=***
+FACEBOOK_APP_ID=***
+FACEBOOK_APP_SECRET=***
+APPLE_CLIENT_ID=***
+APPLE_TEAM_ID=***
+APPLE_KEY_ID=***
+APPLE_PRIVATE_KEY=***
+
+# Phone Authentication
+TWILIO_ACCOUNT_SID=***
+TWILIO_AUTH_TOKEN=***
+TWILIO_PHONE_NUMBER=***
+FIREBASE_PROJECT_ID=***
+FIREBASE_PRIVATE_KEY=***
+
+# Cloud Storage
+AWS_ACCESS_KEY_ID=***
+AWS_SECRET_ACCESS_KEY=***
+AWS_REGION=ap-south-1
+AWS_BUCKET=umrahconnect-media
+
+WASABI_ACCESS_KEY_ID=***
+WASABI_SECRET_ACCESS_KEY=***
+WASABI_REGION=ap-southeast-1
+WASABI_BUCKET=umrahconnect-backup
+
+CLOUDINARY_CLOUD_NAME=***
+CLOUDINARY_API_KEY=***
+CLOUDINARY_API_SECRET=***
+
+DO_SPACES_KEY=***
+DO_SPACES_SECRET=***
+DO_SPACES_REGION=sgp1
+DO_SPACES_BUCKET=umrahconnect-assets
 
 # Frontend URL
 FRONTEND_URL=http://localhost:3000
@@ -835,92 +738,60 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
-## 🚀 DEPLOYMENT CHECKLIST
+## 🎯 TOTAL PROJECT STATS - UPDATED
 
-### **Frontend Deployment**
-- [ ] Build production bundle: `npm run build`
-- [ ] Configure environment variables
-- [ ] Deploy to Vercel/Netlify
-- [ ] Setup custom domain
-- [ ] Configure CDN
-- [ ] Enable HTTPS
-
-### **Backend Deployment**
-- [ ] Setup production database
-- [ ] Configure environment variables
-- [ ] Deploy to AWS/DigitalOcean/Heroku
-- [ ] Setup SSL certificate
-- [ ] Configure CORS
-- [ ] Setup monitoring (PM2)
-- [ ] Configure backup strategy
-
-### **Database Setup**
-- [ ] Create production database
-- [ ] Run migrations
-- [ ] Setup indexes
-- [ ] Configure backups
-- [ ] Setup replication (optional)
-- [ ] Optimize queries
-
----
-
-## 📊 COMPLETE FEATURE LIST (100% IMPLEMENTED)
-
-### ✅ **Customer Features**
-1. Homepage with 9 sections
-2. Package browsing & filtering
-3. Package details (5 tabs)
-4. 4-step booking process
-5. Customer dashboard (5 tabs)
-6. Booking management
-7. Payment tracking
-8. Document upload
-9. Profile management
-10. Visa tracking (7 stages)
-
-### ✅ **Vendor Features**
-1. Vendor dashboard (8 stats)
-2. Request management (11 actions)
-3. 4-step request creation
-4. Itinerary generator (timeline)
-5. Package management (grid/list)
-6. Package creation (7 tabs)
-7. CRM system (3 tabs)
-8. Customer management
-9. Lead management
-10. Communication tracking
-11. Payments & accounting (4 tabs)
-12. Revenue/expense charts
-13. Invoice generation
-14. Reports & analytics
-15. Performance insights
-
----
-
-## 🎯 TOTAL PROJECT STATS
-
-- **Total Files:** 99+
-- **Total Commits:** 99+
-- **Lines of Code:** 55,000+
-- **Database Tables:** 15
-- **API Endpoints:** 100+
-- **Features:** 25+
+- **Total Files:** 108+
+- **Total Commits:** 108+
+- **Lines of Code:** 60,000+
+- **Database Tables:** 24
+- **API Endpoints:** 150+
+- **Features:** 35+
+- **Payment Gateways:** 6
+- **Social Logins:** 6
+- **Cloud Storage Providers:** 6
+- **Admin Roles:** 5
 - **Phases Completed:** 5/5 (100%)
 
 ---
 
-## 📝 NOTES
+## 🚀 NEW FEATURES SUMMARY
 
-This is a COMPLETE implementation guide. All frontend components, backend APIs, and database schemas are documented. The project is production-ready and scalable.
+### ✅ **Payment Gateway System**
+- 6 payment gateways
+- Dynamic configuration
+- Admin management
+- Processing fees
+- Test/Live modes
 
-**Next Steps:**
-1. Setup backend server
-2. Create database and run migrations
-3. Implement API endpoints
-4. Connect frontend to backend
-5. Test all features
-6. Deploy to production
+### ✅ **Role & Permission System**
+- 5 predefined roles
+- 10 permission modules
+- Granular access control
+- Team management
+- Activity logging
+
+### ✅ **Support Ticket System**
+- 6 ticket categories
+- 4 priority levels
+- Real-time messaging
+- File attachments
+- Assignment system
+
+### ✅ **Social Authentication**
+- 6 login methods
+- OAuth integration
+- Phone OTP
+- Account linking
+- Profile sync
+
+### ✅ **Cloud Storage Management**
+- 6 storage providers
+- Dynamic switching
+- File categorization
+- Auto-optimization
+- Cost tracking
 
 ---
 
 **Built with ❤️ for UmrahConnect 2.0**
+**Version 2.0 - Enhanced Edition**
