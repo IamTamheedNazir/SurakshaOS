@@ -1,0 +1,671 @@
+.payments-accounting-page {
+  min-height: 100vh;
+  background: var(--gray-50);
+  padding: 2rem 0 4rem;
+}
+
+.date-range-select {
+  padding: 0.875rem 1.25rem;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  background: var(--white);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.date-range-select:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px var(--primary-green-lighter);
+}
+
+/* Financial Stats Grid */
+.financial-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.financial-stat-card {
+  padding: 2rem;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition);
+  border-left: 4px solid transparent;
+}
+
+.financial-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-green { border-left-color: var(--success); }
+.stat-red { border-left-color: #ef4444; }
+.stat-blue { border-left-color: #3b82f6; }
+.stat-orange { border-left-color: #f59e0b; }
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-header .stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.stat-green .stat-icon {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.stat-red .stat-icon {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+}
+
+.stat-blue .stat-icon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.stat-orange .stat-icon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.stat-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin: 0;
+}
+
+.financial-stat-card .stat-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+}
+
+.stat-change {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.stat-change.positive {
+  background: #d1fae5;
+  color: var(--success);
+}
+
+.stat-change.negative {
+  background: #fecaca;
+  color: #ef4444;
+}
+
+.stat-change.neutral {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+/* Revenue Chart */
+.revenue-chart-section {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2.5rem;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.chart-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 2rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.legend-revenue .legend-dot {
+  background: var(--primary-green);
+}
+
+.legend-expenses .legend-dot {
+  background: #ef4444;
+}
+
+.chart-container {
+  padding: 2rem 1rem;
+}
+
+.chart-bars {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 300px;
+  gap: 1rem;
+}
+
+.chart-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.chart-bars-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+
+.chart-bar {
+  width: 40px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  position: relative;
+  transition: all var(--transition);
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.chart-bar:hover {
+  opacity: 0.8;
+  transform: translateY(-4px);
+}
+
+.revenue-bar {
+  background: linear-gradient(180deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+}
+
+.expense-bar {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+}
+
+.bar-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--white);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.chart-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+/* Accounting Tabs */
+.accounting-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.accounting-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.accounting-tab-btn:hover {
+  background: var(--gray-100);
+}
+
+.accounting-tab-btn.active {
+  background: var(--primary-green);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.accounting-tab-btn span {
+  font-size: 1.25rem;
+}
+
+/* Accounting Content */
+.accounting-content {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Overview Section */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.overview-card {
+  padding: 2rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--gray-200);
+}
+
+.overview-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 1.5rem;
+}
+
+.overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.overview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-200);
+  transition: all var(--transition);
+}
+
+.overview-item:hover {
+  border-color: var(--primary-green);
+  box-shadow: var(--shadow-md);
+}
+
+.overview-item-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.overview-item-info strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.overview-item-info p {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.expense-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.overview-item-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.overview-item-amount strong {
+  font-size: 1.125rem;
+  color: var(--primary-green);
+}
+
+/* Payments Table */
+.payments-table-container {
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payments-table thead {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.payments-table th {
+  padding: 1.25rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  white-space: nowrap;
+}
+
+.payments-table td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: middle;
+}
+
+.payments-table tbody tr {
+  transition: background var(--transition);
+}
+
+.payments-table tbody tr:hover {
+  background: var(--gray-50);
+}
+
+.paid-amount {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.pending-amount {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* Expenses Grid */
+.expenses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.expense-card {
+  padding: 2rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--gray-200);
+  transition: all var(--transition);
+}
+
+.expense-card:hover {
+  border-color: var(--primary-green);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.expense-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.expense-icon-large {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--primary-green-lighter) 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+}
+
+.expense-info {
+  flex: 1;
+}
+
+.expense-info h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.expense-info p {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.expense-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-green);
+  margin-bottom: 1.5rem;
+}
+
+.expense-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.expense-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--white);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.expense-detail-row span {
+  color: var(--gray-600);
+}
+
+.expense-detail-row strong {
+  color: var(--gray-900);
+}
+
+.receipt-link {
+  color: var(--primary-green);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition);
+}
+
+.receipt-link:hover {
+  color: var(--primary-green-dark);
+}
+
+.expense-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+/* Invoices Table */
+.invoices-table-container {
+  overflow-x: auto;
+}
+
+.invoices-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invoices-table thead {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.invoices-table th {
+  padding: 1.25rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  white-space: nowrap;
+}
+
+.invoices-table td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: middle;
+}
+
+.invoices-table tbody tr {
+  transition: background var(--transition);
+}
+
+.invoices-table tbody tr:hover {
+  background: var(--gray-50);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .financial-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expenses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .payments-accounting-page {
+    padding: 1rem 0 2rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .header-actions .btn,
+  .date-range-select {
+    width: 100%;
+  }
+
+  .financial-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-bars {
+    height: 200px;
+  }
+
+  .chart-bar {
+    width: 30px;
+  }
+
+  .accounting-tabs {
+    padding: 0.75rem;
+    overflow-x: auto;
+  }
+
+  .accounting-tab-btn {
+    padding: 0.875rem 1.5rem;
+  }
+
+  .accounting-content {
+    padding: 1.5rem;
+  }
+
+  .expenses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payments-table,
+  .invoices-table {
+    font-size: 0.875rem;
+  }
+
+  .payments-table th,
+  .payments-table td,
+  .invoices-table th,
+  .invoices-table td {
+    padding: 1rem 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .chart-legend {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .chart-bars {
+    gap: 0.5rem;
+  }
+
+  .chart-bar {
+    width: 25px;
+  }
+
+  .expense-actions {
+    grid-template-columns: 1fr;
+  }
+}
