@@ -1,0 +1,135 @@
+# UmrahConnect 2.0 - Apache Configuration
+# This file handles URL rewriting and routing
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Force HTTPS (uncomment in production)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # ============================================
+    # INSTALLATION CHECK
+    # ============================================
+    # If .env doesn't exist and not accessing /install/, redirect to installer
+    RewriteCond %{DOCUMENT_ROOT}/.env !-f
+    RewriteCond %{REQUEST_URI} !^/install/
+    RewriteCond %{REQUEST_URI} !^/install$
+    RewriteRule ^(.*)$ /install/ [L,R=302]
+
+    # ============================================
+    # API ROUTING
+    # ============================================
+    # Route /api/* requests to Node.js backend
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^api/(.*)$ http://localhost:5000/api/$1 [P,L]
+
+    # ============================================
+    # STATIC FILES
+    # ============================================
+    # Serve static files directly
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # ============================================
+    # FRONTEND ROUTING
+    # ============================================
+    # If file/directory doesn't exist, route to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /index.php [L]
+</IfModule>
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (adjust as needed)
+    # Header always set Content-Security-Policy "default-src 'self'"
+</IfModule>
+
+# ============================================
+# PHP SETTINGS
+# ============================================
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# ============================================
+# GZIP COMPRESSION
+# ============================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# ============================================
+# BROWSER CACHING
+# ============================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType text/x-javascript "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# ============================================
+# DIRECTORY PROTECTION
+# ============================================
+# Protect .env file
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Protect .git directory
+<DirectoryMatch "\.git">
+    Order allow,deny
+    Deny from all
+</DirectoryMatch>
+
+# Protect node_modules
+<DirectoryMatch "node_modules">
+    Order allow,deny
+    Deny from all
+</DirectoryMatch>
+
+# ============================================
+# ERROR PAGES
+# ============================================
+ErrorDocument 404 /index.php
+ErrorDocument 403 /index.php
+ErrorDocument 500 /index.php
+
+# ============================================
+# DISABLE DIRECTORY LISTING
+# ============================================
+Options -Indexes
+
+# ============================================
+# DEFAULT CHARSET
+# ============================================
+AddDefaultCharset UTF-8
