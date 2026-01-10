@@ -43,33 +43,34 @@ app.use('/api/', limiter);
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
+    message: 'UmrahConnect API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// API Routes
-app.use('/api/auth', require('./routes/auth.routes'));
-app.use('/api/users', require('./routes/user.routes'));
-app.use('/api/packages', require('./routes/package.routes'));
-app.use('/api/bookings', require('./routes/booking.routes'));
-app.use('/api/payments', require('./routes/payment.routes'));
-app.use('/api/reviews', require('./routes/review.routes'));
-app.use('/api/notifications', require('./routes/notification.routes'));
+// API Routes - FIXED PATHS
+app.use('/api/auth', require('./src/routes/auth.routes'));
+app.use('/api/users', require('./src/routes/user.routes'));
+app.use('/api/packages', require('./src/routes/package.routes'));
+app.use('/api/bookings', require('./src/routes/booking.routes'));
+app.use('/api/payments', require('./src/routes/payment.routes'));
+app.use('/api/reviews', require('./src/routes/review.routes'));
+app.use('/api/notifications', require('./src/routes/notification.routes'));
 
 // Vendor Routes
-app.use('/api/vendor', require('./routes/vendor/vendor.routes'));
+app.use('/api/vendor', require('./src/routes/vendor/vendor.routes'));
 
 // Admin Routes
-app.use('/api/admin/settings', require('./routes/admin/settings.routes'));
-app.use('/api/admin/registration-fields', require('./routes/admin/registrationFields.routes'));
-app.use('/api/admin/vendors', require('./routes/admin/vendors.routes'));
-app.use('/api/admin/bookings', require('./routes/admin/bookings.routes'));
-app.use('/api/admin/users', require('./routes/admin/users.routes'));
-app.use('/api/admin/packages', require('./routes/admin/packages.routes'));
-app.use('/api/admin/payments', require('./routes/admin/payments.routes'));
-app.use('/api/admin/analytics', require('./routes/admin/analytics.routes'));
-app.use('/api/admin/reports', require('./routes/admin/reports.routes'));
+app.use('/api/admin/settings', require('./src/routes/admin/settings.routes'));
+app.use('/api/admin/registration-fields', require('./src/routes/admin/registrationFields.routes'));
+app.use('/api/admin/vendors', require('./src/routes/admin/vendors.routes'));
+app.use('/api/admin/bookings', require('./src/routes/admin/bookings.routes'));
+app.use('/api/admin/users', require('./src/routes/admin/users.routes'));
+app.use('/api/admin/packages', require('./src/routes/admin/packages.routes'));
+app.use('/api/admin/payments', require('./src/routes/admin/payments.routes'));
+app.use('/api/admin/analytics', require('./src/routes/admin/analytics.routes'));
+app.use('/api/admin/reports', require('./src/routes/admin/reports.routes'));
 
 // Error Handler Middleware
 app.use((err, req, res, next) => {
@@ -86,16 +87,21 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+  console.log('='.repeat(50));
+  console.log('🚀 UmrahConnect API Server Started');
+  console.log('='.repeat(50));
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
+  console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+  console.log('='.repeat(50));
 });
 
 module.exports = app;
