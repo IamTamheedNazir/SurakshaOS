@@ -110,8 +110,8 @@ export const bannersAPI = {
   },
 
   // Reorder banners (admin)
-  reorderBanners: async (banners) => {
-    const response = await api.put('/banners/reorder', { banners });
+  reorderBanners: async (bannerId, direction) => {
+    const response = await api.put(`/banners/${bannerId}/reorder`, { direction });
     return response.data;
   },
 };
@@ -165,7 +165,7 @@ export const themesAPI = {
 };
 
 // ========================================
-// CMS API - SITE SETTINGS
+// CMS API - SETTINGS
 // ========================================
 
 export const settingsAPI = {
@@ -175,13 +175,13 @@ export const settingsAPI = {
     return response.data;
   },
 
-  // Get all settings (admin)
+  // Get site settings (admin)
   getSiteSettings: async () => {
     const response = await api.get('/settings');
     return response.data;
   },
 
-  // Update settings (admin)
+  // Update site settings (admin)
   updateSiteSettings: async (data) => {
     const response = await api.put('/settings', data);
     return response.data;
@@ -194,8 +194,8 @@ export const settingsAPI = {
 
 export const testimonialsAPI = {
   // Get featured testimonials (public)
-  getFeaturedTestimonials: async (limit = 6) => {
-    const response = await api.get(`/testimonials/featured?limit=${limit}`);
+  getFeaturedTestimonials: async () => {
+    const response = await api.get('/testimonials/featured');
     return response.data;
   },
 
@@ -307,14 +307,26 @@ export const usersAPI = {
 // ========================================
 
 export const packagesAPI = {
-  // Get all packages with filters
-  getPackages: async (params = {}) => {
+  // Get all packages (public)
+  getAllPackages: async (params = {}) => {
     const response = await api.get('/packages', { params });
     return response.data;
   },
 
-  // Get single package by ID
-  getPackageById: async (id) => {
+  // Get featured packages
+  getFeaturedPackages: async () => {
+    const response = await api.get('/packages/featured');
+    return response.data;
+  },
+
+  // Get popular packages
+  getPopularPackages: async () => {
+    const response = await api.get('/packages/popular');
+    return response.data;
+  },
+
+  // Get single package
+  getPackage: async (id) => {
     const response = await api.get(`/packages/${id}`);
     return response.data;
   },
@@ -324,18 +336,6 @@ export const packagesAPI = {
     const response = await api.get('/packages/search', { params: { q: query } });
     return response.data;
   },
-
-  // Get featured packages
-  getFeaturedPackages: async (limit = 6) => {
-    const response = await api.get(`/packages/featured?limit=${limit}`);
-    return response.data;
-  },
-
-  // Get popular packages
-  getPopularPackages: async (limit = 6) => {
-    const response = await api.get(`/packages/popular?limit=${limit}`);
-    return response.data;
-  },
 };
 
 // ========================================
@@ -343,41 +343,65 @@ export const packagesAPI = {
 // ========================================
 
 export const bookingsAPI = {
-  // Create new booking
+  // Create booking
   createBooking: async (bookingData) => {
     const response = await api.post('/bookings', bookingData);
     return response.data;
   },
 
   // Get user bookings
-  getUserBookings: async (params = {}) => {
-    const response = await api.get('/bookings', { params });
+  getUserBookings: async () => {
+    const response = await api.get('/bookings/my-bookings');
     return response.data;
   },
 
-  // Get single booking by ID
-  getBookingById: async (id) => {
+  // Get single booking
+  getBooking: async (id) => {
     const response = await api.get(`/bookings/${id}`);
     return response.data;
   },
 
-  // Update booking
-  updateBooking: async (id, bookingData) => {
-    const response = await api.put(`/bookings/${id}`, bookingData);
-    return response.data;
-  },
-
   // Cancel booking
-  cancelBooking: async (id, reason) => {
-    const response = await api.put(`/bookings/${id}/cancel`, { reason });
+  cancelBooking: async (id) => {
+    const response = await api.put(`/bookings/${id}/cancel`);
     return response.data;
   },
 
-  // Get booking invoice
-  getInvoice: async (id) => {
+  // Download invoice
+  downloadInvoice: async (id) => {
     const response = await api.get(`/bookings/${id}/invoice`, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+};
+
+// ========================================
+// PAYMENTS API
+// ========================================
+
+export const paymentsAPI = {
+  // Create payment order
+  createPaymentOrder: async (bookingId, paymentData) => {
+    const response = await api.post(`/payments/create-order/${bookingId}`, paymentData);
+    return response.data;
+  },
+
+  // Verify payment
+  verifyPayment: async (paymentData) => {
+    const response = await api.post('/payments/verify', paymentData);
+    return response.data;
+  },
+
+  // Get payment status
+  getPaymentStatus: async (bookingId) => {
+    const response = await api.get(`/payments/status/${bookingId}`);
+    return response.data;
+  },
+
+  // Get payment methods
+  getPaymentMethods: async () => {
+    const response = await api.get('/payments/methods');
     return response.data;
   },
 };
@@ -388,8 +412,8 @@ export const bookingsAPI = {
 
 export const reviewsAPI = {
   // Get package reviews
-  getPackageReviews: async (packageId, params = {}) => {
-    const response = await api.get(`/reviews/package/${packageId}`, { params });
+  getPackageReviews: async (packageId) => {
+    const response = await api.get(`/reviews/package/${packageId}`);
     return response.data;
   },
 
@@ -413,85 +437,67 @@ export const reviewsAPI = {
 };
 
 // ========================================
-// VENDORS API (For Vendor Dashboard)
+// VENDOR API
 // ========================================
 
-export const vendorsAPI = {
-  // Get vendor profile
-  getProfile: async () => {
-    const response = await api.get('/vendors/profile');
-    return response.data;
-  },
-
-  // Update vendor profile
-  updateProfile: async (vendorData) => {
-    const response = await api.put('/vendors/profile', vendorData);
+export const vendorAPI = {
+  // Get vendor dashboard
+  getDashboard: async () => {
+    const response = await api.get('/vendor/dashboard');
     return response.data;
   },
 
   // Get vendor packages
-  getPackages: async (params = {}) => {
-    const response = await api.get('/vendors/packages', { params });
+  getPackages: async () => {
+    const response = await api.get('/vendor/packages');
     return response.data;
   },
 
   // Create package
   createPackage: async (packageData) => {
-    const response = await api.post('/vendors/packages', packageData);
+    const response = await api.post('/vendor/packages', packageData);
     return response.data;
   },
 
   // Update package
   updatePackage: async (id, packageData) => {
-    const response = await api.put(`/vendors/packages/${id}`, packageData);
+    const response = await api.put(`/vendor/packages/${id}`, packageData);
     return response.data;
   },
 
   // Delete package
   deletePackage: async (id) => {
-    const response = await api.delete(`/vendors/packages/${id}`);
+    const response = await api.delete(`/vendor/packages/${id}`);
     return response.data;
   },
 
   // Get vendor bookings
-  getBookings: async (params = {}) => {
-    const response = await api.get('/vendors/bookings', { params });
+  getBookings: async () => {
+    const response = await api.get('/vendor/bookings');
     return response.data;
   },
 
-  // Get vendor statistics
-  getStatistics: async () => {
-    const response = await api.get('/vendors/statistics');
+  // Confirm booking
+  confirmBooking: async (id) => {
+    const response = await api.put(`/vendor/bookings/${id}/confirm`);
+    return response.data;
+  },
+
+  // Get vendor earnings
+  getEarnings: async () => {
+    const response = await api.get('/vendor/earnings');
     return response.data;
   },
 };
 
 // ========================================
-// ADMIN API (For Admin Dashboard)
+// ADMIN API
 // ========================================
 
 export const adminAPI = {
   // Get all users
   getUsers: async (params = {}) => {
     const response = await api.get('/admin/users', { params });
-    return response.data;
-  },
-
-  // Get user by ID
-  getUserById: async (id) => {
-    const response = await api.get(`/admin/users/${id}`);
-    return response.data;
-  },
-
-  // Update user
-  updateUser: async (id, userData) => {
-    const response = await api.put(`/admin/users/${id}`, userData);
-    return response.data;
-  },
-
-  // Delete user
-  deleteUser: async (id) => {
-    const response = await api.delete(`/admin/users/${id}`);
     return response.data;
   },
 
