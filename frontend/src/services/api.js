@@ -407,6 +407,53 @@ export const paymentsAPI = {
 };
 
 // ========================================
+// DOCUMENTS API
+// ========================================
+
+export const documentsAPI = {
+  // Get user documents
+  getUserDocuments: async () => {
+    const response = await api.get('/documents/my-documents');
+    return response.data;
+  },
+
+  // Upload document
+  uploadDocument: async (documentData) => {
+    const formData = new FormData();
+    formData.append('file', documentData.file);
+    formData.append('type', documentData.type);
+    formData.append('bookingId', documentData.bookingId);
+
+    const response = await api.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Get document
+  getDocument: async (id) => {
+    const response = await api.get(`/documents/${id}`);
+    return response.data;
+  },
+
+  // Delete document
+  deleteDocument: async (id) => {
+    const response = await api.delete(`/documents/${id}`);
+    return response.data;
+  },
+
+  // Download document
+  downloadDocument: async (id) => {
+    const response = await api.get(`/documents/${id}/download`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+};
+
+// ========================================
 // REVIEWS API
 // ========================================
 
