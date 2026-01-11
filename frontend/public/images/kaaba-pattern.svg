@@ -1,0 +1,10 @@
+<!-- Placeholder SVG for kaaba-pattern -->
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <pattern id="pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#f8f9fa"/>
+      <path d="M0 20h40M20 0v40" stroke="#e9ecef" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#pattern)"/>
+</svg>
