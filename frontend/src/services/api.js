@@ -69,6 +69,168 @@ api.interceptors.response.use(
 );
 
 // ========================================
+// CMS API - BANNERS
+// ========================================
+
+export const bannersAPI = {
+  // Get active banners (public)
+  getActiveBanners: async () => {
+    const response = await api.get('/banners/active');
+    return response.data;
+  },
+
+  // Get all banners (admin)
+  getAllBanners: async () => {
+    const response = await api.get('/banners');
+    return response.data;
+  },
+
+  // Get single banner
+  getBanner: async (id) => {
+    const response = await api.get(`/banners/${id}`);
+    return response.data;
+  },
+
+  // Create banner (admin)
+  createBanner: async (data) => {
+    const response = await api.post('/banners', data);
+    return response.data;
+  },
+
+  // Update banner (admin)
+  updateBanner: async (id, data) => {
+    const response = await api.put(`/banners/${id}`, data);
+    return response.data;
+  },
+
+  // Delete banner (admin)
+  deleteBanner: async (id) => {
+    const response = await api.delete(`/banners/${id}`);
+    return response.data;
+  },
+
+  // Reorder banners (admin)
+  reorderBanners: async (banners) => {
+    const response = await api.put('/banners/reorder', { banners });
+    return response.data;
+  },
+};
+
+// ========================================
+// CMS API - THEMES
+// ========================================
+
+export const themesAPI = {
+  // Get active theme (public)
+  getActiveTheme: async () => {
+    const response = await api.get('/themes/active');
+    return response.data;
+  },
+
+  // Get all themes (admin)
+  getAllThemes: async () => {
+    const response = await api.get('/themes');
+    return response.data;
+  },
+
+  // Get single theme
+  getTheme: async (id) => {
+    const response = await api.get(`/themes/${id}`);
+    return response.data;
+  },
+
+  // Create theme (admin)
+  createTheme: async (data) => {
+    const response = await api.post('/themes', data);
+    return response.data;
+  },
+
+  // Update theme (admin)
+  updateTheme: async (id, data) => {
+    const response = await api.put(`/themes/${id}`, data);
+    return response.data;
+  },
+
+  // Delete theme (admin)
+  deleteTheme: async (id) => {
+    const response = await api.delete(`/themes/${id}`);
+    return response.data;
+  },
+
+  // Activate theme (admin)
+  activateTheme: async (id) => {
+    const response = await api.put(`/themes/${id}/activate`);
+    return response.data;
+  },
+};
+
+// ========================================
+// CMS API - SITE SETTINGS
+// ========================================
+
+export const settingsAPI = {
+  // Get public settings
+  getPublicSettings: async () => {
+    const response = await api.get('/settings/public');
+    return response.data;
+  },
+
+  // Get all settings (admin)
+  getSiteSettings: async () => {
+    const response = await api.get('/settings');
+    return response.data;
+  },
+
+  // Update settings (admin)
+  updateSiteSettings: async (data) => {
+    const response = await api.put('/settings', data);
+    return response.data;
+  },
+};
+
+// ========================================
+// CMS API - TESTIMONIALS
+// ========================================
+
+export const testimonialsAPI = {
+  // Get featured testimonials (public)
+  getFeaturedTestimonials: async (limit = 6) => {
+    const response = await api.get(`/testimonials/featured?limit=${limit}`);
+    return response.data;
+  },
+
+  // Get all testimonials (public)
+  getAllTestimonials: async (params = {}) => {
+    const response = await api.get('/testimonials', { params });
+    return response.data;
+  },
+
+  // Get single testimonial
+  getTestimonial: async (id) => {
+    const response = await api.get(`/testimonials/${id}`);
+    return response.data;
+  },
+
+  // Create testimonial (admin)
+  createTestimonial: async (data) => {
+    const response = await api.post('/testimonials', data);
+    return response.data;
+  },
+
+  // Update testimonial (admin)
+  updateTestimonial: async (id, data) => {
+    const response = await api.put(`/testimonials/${id}`, data);
+    return response.data;
+  },
+
+  // Delete testimonial (admin)
+  deleteTestimonial: async (id) => {
+    const response = await api.delete(`/testimonials/${id}`);
+    return response.data;
+  },
+};
+
+// ========================================
 // AUTH API
 // ========================================
 
@@ -164,14 +326,14 @@ export const packagesAPI = {
   },
 
   // Get featured packages
-  getFeaturedPackages: async () => {
-    const response = await api.get('/packages/featured');
+  getFeaturedPackages: async (limit = 6) => {
+    const response = await api.get(`/packages/featured?limit=${limit}`);
     return response.data;
   },
 
   // Get popular packages
-  getPopularPackages: async () => {
-    const response = await api.get('/packages/popular');
+  getPopularPackages: async (limit = 6) => {
+    const response = await api.get(`/packages/popular?limit=${limit}`);
     return response.data;
   },
 };
@@ -366,6 +528,18 @@ export const adminAPI = {
   // Reject package
   rejectPackage: async (id, reason) => {
     const response = await api.put(`/admin/packages/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  // Toggle featured package
+  toggleFeatured: async (id) => {
+    const response = await api.put(`/admin/packages/${id}/toggle-featured`);
+    return response.data;
+  },
+
+  // Toggle popular package
+  togglePopular: async (id) => {
+    const response = await api.put(`/admin/packages/${id}/toggle-popular`);
     return response.data;
   },
 
