@@ -1,16 +1,15 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';
 
-// Create axios instance
+// Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1',
-  timeout: 30000,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 seconds
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token to requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,180 +23,412 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - Handle errors globally
 api.interceptors.response.use(
   (response) => {
-    return response.data;
+    return response;
   },
-  async (error) => {
-    const originalRequest = error.config;
+  (error) => {
+    // Handle specific error cases
+    if (error.response) {
+      // Server responded with error status
+      const { status, data } = error.response;
 
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post(
-            `${process.env.REACT_APP_API_URL}/auth/refresh-token`,
-            { refreshToken }
-          );
-
-          const { token } = response.data.data;
-          localStorage.setItem('token', token);
-
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh token failed, logout user
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+      switch (status) {
+        case 401:
+          // Unauthorized - Clear token and redirect to login
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          break;
+        case 403:
+          // Forbidden - Show error message
+          console.error('Access forbidden:', data.message);
+          break;
+        case 404:
+          // Not found
+          console.error('Resource not found:', data.message);
+          break;
+        case 500:
+          // Server error
+          console.error('Server error:', data.message);
+          break;
+        default:
+          console.error('API Error:', data.message);
       }
+    } else if (error.request) {
+      // Request made but no response received
+      console.error('Network error: No response from server');
+    } else {
+      // Something else happened
+      console.error('Error:', error.message);
     }
-
-    // Handle other errors
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      'Something went wrong';
-
-    toast.error(errorMessage);
 
     return Promise.reject(error);
   }
 );
 
-// ============================================
+// ========================================
 // AUTH API
-// ============================================
+// ========================================
 
 export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-  logout: () => api.post('/auth/logout'),
-  getCurrentUser: () => api.get('/auth/me'),
-  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (data) => api.post('/auth/reset-password', data),
-  verifyEmail: (token) => api.post('/auth/verify-email', { token }),
-  sendOTP: (phone) => api.post('/auth/send-otp', { phone }),
-  verifyPhone: (data) => api.post('/auth/verify-phone', data),
+  // Register new user
+  register: async (userData) => {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  },
+
+  // Login user
+  login: async (credentials) => {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  },
+
+  // Get current user
+  getCurrentUser: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
+
+  // Logout user
+  logout: async () => {
+    const response = await api.post('/auth/logout');
+    return response.data;
+  },
+
+  // Forgot password
+  forgotPassword: async (email) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Reset password
+  resetPassword: async (token, password) => {
+    const response = await api.post(`/auth/reset-password/${token}`, { password });
+    return response.data;
+  },
 };
 
-// ============================================
-// PACKAGES API
-// ============================================
-
-export const packagesAPI = {
-  getAll: (params) => api.get('/packages', { params }),
-  getById: (id) => api.get(`/packages/${id}`),
-  search: (params) => api.get('/packages/search', { params }),
-  getFeatured: () => api.get('/packages/featured'),
-  getByVendor: (vendorId) => api.get(`/packages/vendor/${vendorId}`),
-};
-
-// ============================================
-// BOOKINGS API
-// ============================================
-
-export const bookingsAPI = {
-  create: (data) => api.post('/bookings', data),
-  getAll: (params) => api.get('/bookings', { params }),
-  getById: (id) => api.get(`/bookings/${id}`),
-  getByNumber: (bookingNumber) => api.get(`/bookings/number/${bookingNumber}`),
-  update: (id, data) => api.put(`/bookings/${id}`, data),
-  cancel: (id, reason) => api.post(`/bookings/${id}/cancel`, { reason }),
-  uploadDocument: (id, formData) =>
-    api.post(`/bookings/${id}/documents`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  getDocuments: (id) => api.get(`/bookings/${id}/documents`),
-  getVisaStatus: (id) => api.get(`/bookings/${id}/visa-status`),
-};
-
-// ============================================
-// PAYMENTS API
-// ============================================
-
-export const paymentsAPI = {
-  createOrder: (bookingId, amount) =>
-    api.post('/payments/create-order', { bookingId, amount }),
-  verifyPayment: (data) => api.post('/payments/verify', data),
-  getByBooking: (bookingId) => api.get(`/payments/booking/${bookingId}`),
-  getPaymentSchedule: (bookingId) =>
-    api.get(`/payments/schedule/${bookingId}`),
-};
-
-// ============================================
-// REVIEWS API
-// ============================================
-
-export const reviewsAPI = {
-  create: (data) => api.post('/reviews', data),
-  getByPackage: (packageId) => api.get(`/reviews/package/${packageId}`),
-  getByVendor: (vendorId) => api.get(`/reviews/vendor/${vendorId}`),
-  update: (id, data) => api.put(`/reviews/${id}`, data),
-  delete: (id) => api.delete(`/reviews/${id}`),
-  markHelpful: (id) => api.post(`/reviews/${id}/helpful`),
-};
-
-// ============================================
-// VENDORS API
-// ============================================
-
-export const vendorsAPI = {
-  getAll: (params) => api.get('/vendors', { params }),
-  getById: (id) => api.get(`/vendors/${id}`),
-  getProfile: () => api.get('/vendors/profile'),
-  updateProfile: (data) => api.put('/vendors/profile', data),
-  getStats: () => api.get('/vendors/stats'),
-  getBookings: (params) => api.get('/vendors/bookings', { params }),
-  getCustomers: (params) => api.get('/vendors/customers', { params }),
-};
-
-// ============================================
+// ========================================
 // USERS API
-// ============================================
+// ========================================
 
 export const usersAPI = {
-  getProfile: () => api.get('/users/profile'),
-  updateProfile: (data) => api.put('/users/profile', data),
-  changePassword: (data) => api.post('/users/change-password', data),
-  uploadAvatar: (formData) =>
-    api.post('/users/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  getBookings: (params) => api.get('/users/bookings', { params }),
-  getNotifications: (params) => api.get('/users/notifications', { params }),
-  markNotificationRead: (id) => api.put(`/users/notifications/${id}/read`),
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get('/users/profile');
+    return response.data;
+  },
+
+  // Update user profile
+  updateProfile: async (userData) => {
+    const response = await api.put('/users/profile', userData);
+    return response.data;
+  },
+
+  // Update password
+  updatePassword: async (passwordData) => {
+    const response = await api.put('/users/password', passwordData);
+    return response.data;
+  },
+
+  // Delete account
+  deleteAccount: async () => {
+    const response = await api.delete('/users/account');
+    return response.data;
+  },
 };
 
-// ============================================
-// NOTIFICATIONS API
-// ============================================
+// ========================================
+// PACKAGES API
+// ========================================
 
-export const notificationsAPI = {
-  getAll: (params) => api.get('/notifications', { params }),
-  markAsRead: (id) => api.put(`/notifications/${id}/read`),
-  markAllAsRead: () => api.put('/notifications/read-all'),
-  delete: (id) => api.delete(`/notifications/${id}`),
+export const packagesAPI = {
+  // Get all packages with filters
+  getPackages: async (params = {}) => {
+    const response = await api.get('/packages', { params });
+    return response.data;
+  },
+
+  // Get single package by ID
+  getPackageById: async (id) => {
+    const response = await api.get(`/packages/${id}`);
+    return response.data;
+  },
+
+  // Search packages
+  searchPackages: async (query) => {
+    const response = await api.get('/packages/search', { params: { q: query } });
+    return response.data;
+  },
+
+  // Get featured packages
+  getFeaturedPackages: async () => {
+    const response = await api.get('/packages/featured');
+    return response.data;
+  },
+
+  // Get popular packages
+  getPopularPackages: async () => {
+    const response = await api.get('/packages/popular');
+    return response.data;
+  },
 };
 
-// ============================================
-// AFFILIATES API
-// ============================================
+// ========================================
+// BOOKINGS API
+// ========================================
 
-export const affiliatesAPI = {
-  getProfile: () => api.get('/affiliates/profile'),
-  generateCode: () => api.post('/affiliates/generate-code'),
-  getStats: () => api.get('/affiliates/stats'),
-  getReferrals: (params) => api.get('/affiliates/referrals', { params }),
-  getEarnings: (params) => api.get('/affiliates/earnings', { params }),
-  requestPayout: (data) => api.post('/affiliates/payout', data),
+export const bookingsAPI = {
+  // Create new booking
+  createBooking: async (bookingData) => {
+    const response = await api.post('/bookings', bookingData);
+    return response.data;
+  },
+
+  // Get user bookings
+  getUserBookings: async (params = {}) => {
+    const response = await api.get('/bookings', { params });
+    return response.data;
+  },
+
+  // Get single booking by ID
+  getBookingById: async (id) => {
+    const response = await api.get(`/bookings/${id}`);
+    return response.data;
+  },
+
+  // Update booking
+  updateBooking: async (id, bookingData) => {
+    const response = await api.put(`/bookings/${id}`, bookingData);
+    return response.data;
+  },
+
+  // Cancel booking
+  cancelBooking: async (id, reason) => {
+    const response = await api.put(`/bookings/${id}/cancel`, { reason });
+    return response.data;
+  },
+
+  // Get booking invoice
+  getInvoice: async (id) => {
+    const response = await api.get(`/bookings/${id}/invoice`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
+// ========================================
+// REVIEWS API
+// ========================================
+
+export const reviewsAPI = {
+  // Get package reviews
+  getPackageReviews: async (packageId, params = {}) => {
+    const response = await api.get(`/reviews/package/${packageId}`, { params });
+    return response.data;
+  },
+
+  // Create review
+  createReview: async (reviewData) => {
+    const response = await api.post('/reviews', reviewData);
+    return response.data;
+  },
+
+  // Update review
+  updateReview: async (id, reviewData) => {
+    const response = await api.put(`/reviews/${id}`, reviewData);
+    return response.data;
+  },
+
+  // Delete review
+  deleteReview: async (id) => {
+    const response = await api.delete(`/reviews/${id}`);
+    return response.data;
+  },
+};
+
+// ========================================
+// VENDORS API (For Vendor Dashboard)
+// ========================================
+
+export const vendorsAPI = {
+  // Get vendor profile
+  getProfile: async () => {
+    const response = await api.get('/vendors/profile');
+    return response.data;
+  },
+
+  // Update vendor profile
+  updateProfile: async (vendorData) => {
+    const response = await api.put('/vendors/profile', vendorData);
+    return response.data;
+  },
+
+  // Get vendor packages
+  getPackages: async (params = {}) => {
+    const response = await api.get('/vendors/packages', { params });
+    return response.data;
+  },
+
+  // Create package
+  createPackage: async (packageData) => {
+    const response = await api.post('/vendors/packages', packageData);
+    return response.data;
+  },
+
+  // Update package
+  updatePackage: async (id, packageData) => {
+    const response = await api.put(`/vendors/packages/${id}`, packageData);
+    return response.data;
+  },
+
+  // Delete package
+  deletePackage: async (id) => {
+    const response = await api.delete(`/vendors/packages/${id}`);
+    return response.data;
+  },
+
+  // Get vendor bookings
+  getBookings: async (params = {}) => {
+    const response = await api.get('/vendors/bookings', { params });
+    return response.data;
+  },
+
+  // Get vendor statistics
+  getStatistics: async () => {
+    const response = await api.get('/vendors/statistics');
+    return response.data;
+  },
+};
+
+// ========================================
+// ADMIN API (For Admin Dashboard)
+// ========================================
+
+export const adminAPI = {
+  // Get all users
+  getUsers: async (params = {}) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+
+  // Get user by ID
+  getUserById: async (id) => {
+    const response = await api.get(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Update user
+  updateUser: async (id, userData) => {
+    const response = await api.put(`/admin/users/${id}`, userData);
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (id) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Get all vendors
+  getVendors: async (params = {}) => {
+    const response = await api.get('/admin/vendors', { params });
+    return response.data;
+  },
+
+  // Approve vendor
+  approveVendor: async (id) => {
+    const response = await api.put(`/admin/vendors/${id}/approve`);
+    return response.data;
+  },
+
+  // Reject vendor
+  rejectVendor: async (id, reason) => {
+    const response = await api.put(`/admin/vendors/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  // Get all packages
+  getPackages: async (params = {}) => {
+    const response = await api.get('/admin/packages', { params });
+    return response.data;
+  },
+
+  // Approve package
+  approvePackage: async (id) => {
+    const response = await api.put(`/admin/packages/${id}/approve`);
+    return response.data;
+  },
+
+  // Reject package
+  rejectPackage: async (id, reason) => {
+    const response = await api.put(`/admin/packages/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  // Get all bookings
+  getBookings: async (params = {}) => {
+    const response = await api.get('/admin/bookings', { params });
+    return response.data;
+  },
+
+  // Get dashboard statistics
+  getStatistics: async () => {
+    const response = await api.get('/admin/statistics');
+    return response.data;
+  },
+
+  // Get analytics data
+  getAnalytics: async (params = {}) => {
+    const response = await api.get('/admin/analytics', { params });
+    return response.data;
+  },
+};
+
+// ========================================
+// UPLOAD API (For File Uploads)
+// ========================================
+
+export const uploadAPI = {
+  // Upload single file
+  uploadFile: async (file, folder = 'general') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const response = await api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Upload multiple files
+  uploadFiles: async (files, folder = 'general') => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+    formData.append('folder', folder);
+
+    const response = await api.post('/upload/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Delete file
+  deleteFile: async (fileUrl) => {
+    const response = await api.delete('/upload', { data: { fileUrl } });
+    return response.data;
+  },
+};
+
+// Export the configured axios instance as default
 export default api;
