@@ -4,9 +4,13 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const connectDB = require('./config/db');
 require('dotenv').config();
 
 const app = express();
+
+// Connect to Database
+connectDB();
 
 // Security Middleware
 app.use(helmet());
@@ -45,7 +49,8 @@ app.get('/health', (req, res) => {
     success: true,
     message: 'UmrahConnect API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    database: 'connected'
   });
 });
 
@@ -108,11 +113,15 @@ app.listen(PORT, () => {
   console.log(`🌐 API URL: http://localhost:${PORT}`);
   console.log(`💚 Health Check: http://localhost:${PORT}/health`);
   console.log('='.repeat(50));
-  console.log('📦 CMS Routes Available:');
-  console.log('   - /api/banners (Slider Management)');
-  console.log('   - /api/themes (Theme Management)');
-  console.log('   - /api/settings (Site Settings)');
-  console.log('   - /api/testimonials (Customer Reviews)');
+  console.log('📦 Available Routes:');
+  console.log('   Auth: /api/auth');
+  console.log('   Users: /api/users');
+  console.log('   Packages: /api/packages');
+  console.log('   Bookings: /api/bookings');
+  console.log('   Reviews: /api/reviews');
+  console.log('   CMS: /api/banners, /api/themes, /api/settings');
+  console.log('   Vendor: /api/vendor');
+  console.log('   Admin: /api/admin/*');
   console.log('='.repeat(50));
 });
 
