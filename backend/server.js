@@ -58,6 +58,12 @@ app.use('/api/payments', require('./src/routes/payment.routes'));
 app.use('/api/reviews', require('./src/routes/review.routes'));
 app.use('/api/notifications', require('./src/routes/notification.routes'));
 
+// CMS Routes (Public + Admin)
+app.use('/api/banners', require('./routes/banners'));
+app.use('/api/themes', require('./routes/themes'));
+app.use('/api/settings', require('./routes/settings'));
+app.use('/api/testimonials', require('./routes/testimonials'));
+
 // Vendor Routes
 app.use('/api/vendor', require('./src/routes/vendor/vendor.routes'));
 
@@ -101,6 +107,12 @@ app.listen(PORT, () => {
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
   console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+  console.log('='.repeat(50));
+  console.log('📦 CMS Routes Available:');
+  console.log('   - /api/banners (Slider Management)');
+  console.log('   - /api/themes (Theme Management)');
+  console.log('   - /api/settings (Site Settings)');
+  console.log('   - /api/testimonials (Customer Reviews)');
   console.log('='.repeat(50));
 });
 
