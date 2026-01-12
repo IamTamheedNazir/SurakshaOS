@@ -7,7 +7,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
 // Pages
-import HomePage from './pages/HomePage';
+import NewHomePage from './pages/NewHomePage';
 import PackagesPage from './pages/PackagesPage';
 import PackageDetailPage from './pages/PackageDetailPage';
 import BookingPage from './pages/BookingPage';
@@ -31,7 +31,7 @@ function App() {
       <main className="main-content">
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<NewHomePage />} />
           <Route path="/packages" element={<PackagesPage />} />
           <Route path="/packages/:id" element={<PackageDetailPage />} />
           <Route path="/vendors/:vendorId" element={<VendorProfilePage />} />
