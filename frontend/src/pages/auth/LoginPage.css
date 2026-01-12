@@ -297,7 +297,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/images/kaaba-pattern.jpg');
+  /* Replaced image with CSS pattern */
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(212, 175, 55, 0.03) 20px, rgba(212, 175, 55, 0.03) 40px),
+    repeating-linear-gradient(-45deg, transparent, transparent 20px, rgba(255, 255, 255, 0.02) 20px, rgba(255, 255, 255, 0.02) 40px);
   background-size: cover;
   background-position: center;
   opacity: 0.1;
