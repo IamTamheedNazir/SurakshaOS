@@ -1,272 +1,111 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ShoppingCart, 
-  User, 
-  Search,
-  Menu,
-  X
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const navigate = useNavigate();
 
-  // Service categories matching your screenshot
-  const services = {
-    hajj: {
-      title: 'Hajj',
-      items: [
-        { name: 'Hajj Packages', path: '/packages?type=hajj' },
-        { name: 'Economy Hajj', path: '/packages?type=hajj&class=economy' },
-        { name: 'Premium Hajj', path: '/packages?type=hajj&class=premium' },
-        { name: 'VIP Hajj', path: '/packages?type=hajj&class=vip' },
-      ]
-    },
-    umrah: {
-      title: 'Umrah',
-      items: [
-        { name: 'Umrah Packages', path: '/packages?type=umrah' },
-        { name: 'Economy Umrah', path: '/packages?type=umrah&class=economy' },
-        { name: 'Premium Umrah', path: '/packages?type=umrah&class=premium' },
-        { name: 'Ramadan Umrah', path: '/packages?type=umrah&special=ramadan' },
-        { name: 'Family Umrah', path: '/packages?type=umrah&special=family' },
-      ]
-    },
-    utilities: {
-      title: 'Utilities',
-      items: [
-        { name: 'eSIM Services', path: '/services/esim' },
-        { name: 'Travel Insurance', path: '/services/insurance' },
-        { name: 'Currency Exchange', path: '/services/forex' },
-        { name: 'Travel Guides', path: '/services/guides' },
-      ]
-    }
-  };
-
-  const handleDropdownToggle = (dropdown) => {
-    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
-  };
+  const navLinks = [
+    { name: 'Hajj', href: '#hajj' },
+    { name: 'Umrah', href: '#umrah' },
+    { name: 'Ziyarat', href: '#ziyarat' },
+    { name: 'Hotels', href: '#hotels' },
+    { name: 'Visa', href: '#visa' },
+    { name: 'Forex', href: '#forex' },
+    { name: 'Catering', href: '#catering' },
+    { name: 'Transport', href: '#transport' },
+    { name: 'Flights', href: '#flights' },
+    { name: 'Utilities', href: '#utilities' },
+    { name: 'Laundry', href: '#laundry' },
+  ];
 
   return (
-    <header className="header">
+    <nav className="header-nav">
       <div className="header-container">
-        {/* Logo */}
-        <Link to="/" className="header-logo">
-          <div className="logo-icon">
-            <div className="mosque-icon">☪</div>
-          </div>
-          <div className="logo-text">
-            <span className="logo-main">UMRAH</span>
-            <span className="logo-sub">CENTER.COM</span>
-          </div>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="header-nav desktop-nav">
-          {/* Hajj Dropdown */}
-          <div 
-            className="nav-item dropdown"
-            onMouseEnter={() => setActiveDropdown('hajj')}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
-            <button className="nav-link">
-              Hajj <ChevronDown size={16} />
-            </button>
-            {activeDropdown === 'hajj' && (
-              <div className="dropdown-menu">
-                {services.hajj.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="dropdown-item"
-                    onClick={() => setActiveDropdown(null)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Umrah Dropdown */}
-          <div 
-            className="nav-item dropdown"
-            onMouseEnter={() => setActiveDropdown('umrah')}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
-            <button className="nav-link">
-              Umrah <ChevronDown size={16} />
-            </button>
-            {activeDropdown === 'umrah' && (
-              <div className="dropdown-menu">
-                {services.umrah.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="dropdown-item"
-                    onClick={() => setActiveDropdown(null)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Single Links */}
-          <Link to="/services/ziyarat" className="nav-link">Ziyarat</Link>
-          <Link to="/services/hotels" className="nav-link">Hotels</Link>
-          <Link to="/services/visa" className="nav-link">Visa</Link>
-          <Link to="/services/forex" className="nav-link">Forex</Link>
-          <Link to="/services/catering" className="nav-link">Catering</Link>
-          <Link to="/services/transport" className="nav-link">Transport</Link>
-          <Link to="/services/flights" className="nav-link">Flights</Link>
-
-          {/* Utilities Dropdown */}
-          <div 
-            className="nav-item dropdown"
-            onMouseEnter={() => setActiveDropdown('utilities')}
-            onMouseLeave={() => setActiveDropdown(null)}
-          >
-            <button className="nav-link">
-              Utilities <ChevronDown size={16} />
-            </button>
-            {activeDropdown === 'utilities' && (
-              <div className="dropdown-menu">
-                {services.utilities.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="dropdown-item"
-                    onClick={() => setActiveDropdown(null)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {/* Right Side Actions */}
-        <div className="header-actions">
-          {/* Search Icon */}
-          <button className="action-btn" aria-label="Search">
-            <Search size={20} />
-          </button>
-
-          {/* Cart Icon */}
-          <Link to="/cart" className="action-btn cart-btn">
-            <ShoppingCart size={20} />
-            <span className="cart-badge">0</span>
+        <div className="header-content">
+          {/* Logo */}
+          <Link to="/" className="header-logo">
+            <div className="logo-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L18.36 7 12 9.82 5.64 7 12 4.18zM4 8.27l7 3.5v7.96l-7-3.5V8.27zm9 11.46v-7.96l7-3.5v7.96l-7 3.5z" />
+              </svg>
+            </div>
+            <div className="logo-text">
+              <span className="logo-main">
+                Umrah<span className="logo-highlight">Connect</span>
+              </span>
+              <div className="logo-subtitle">Trusted Pilgrimage Marketplace</div>
+            </div>
           </Link>
 
-          {/* User Profile */}
-          <Link to="/login" className="action-btn user-btn">
-            <User size={20} />
-          </Link>
+          {/* Desktop Navigation */}
+          <div className="desktop-nav">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="nav-link"
+              >
+                {link.name}
+              </a>
+            ))}
+          </div>
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="mobile-menu-toggle"
+          {/* CTA Buttons */}
+          <div className="header-actions">
+            <Link to="/login" className="btn-login">
+              Login
+            </Link>
+            <Link to="/register" className="btn-primary">
+              Get Started
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="mobile-menu-btn"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="mobile-menu">
+            <div className="mobile-nav">
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="mobile-nav-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.name}
+                </a>
+              ))}
+            </div>
+            <div className="mobile-actions">
+              <Link
+                to="/login"
+                className="mobile-btn-login"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="mobile-btn-primary"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <nav className="mobile-nav">
-          {/* Hajj */}
-          <div className="mobile-nav-section">
-            <button 
-              className="mobile-nav-title"
-              onClick={() => handleDropdownToggle('hajj')}
-            >
-              Hajj <ChevronDown size={16} className={activeDropdown === 'hajj' ? 'rotated' : ''} />
-            </button>
-            {activeDropdown === 'hajj' && (
-              <div className="mobile-dropdown">
-                {services.hajj.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="mobile-dropdown-item"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Umrah */}
-          <div className="mobile-nav-section">
-            <button 
-              className="mobile-nav-title"
-              onClick={() => handleDropdownToggle('umrah')}
-            >
-              Umrah <ChevronDown size={16} className={activeDropdown === 'umrah' ? 'rotated' : ''} />
-            </button>
-            {activeDropdown === 'umrah' && (
-              <div className="mobile-dropdown">
-                {services.umrah.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="mobile-dropdown-item"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Single Links */}
-          <Link to="/services/ziyarat" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Ziyarat</Link>
-          <Link to="/services/hotels" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Hotels</Link>
-          <Link to="/services/visa" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Visa</Link>
-          <Link to="/services/forex" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Forex</Link>
-          <Link to="/services/catering" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Catering</Link>
-          <Link to="/services/transport" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Transport</Link>
-          <Link to="/services/flights" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Flights</Link>
-
-          {/* Utilities */}
-          <div className="mobile-nav-section">
-            <button 
-              className="mobile-nav-title"
-              onClick={() => handleDropdownToggle('utilities')}
-            >
-              Utilities <ChevronDown size={16} className={activeDropdown === 'utilities' ? 'rotated' : ''} />
-            </button>
-            {activeDropdown === 'utilities' && (
-              <div className="mobile-dropdown">
-                {services.utilities.items.map((item, index) => (
-                  <Link 
-                    key={index} 
-                    to={item.path} 
-                    className="mobile-dropdown-item"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
-      )}
-    </header>
+    </nav>
   );
 };
 
