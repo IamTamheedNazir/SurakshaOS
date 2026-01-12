@@ -1,78 +1,58 @@
-// Design System - UmrahConnect 2.0
-// Professional color palette, typography, and spacing standards
+// Design System - UmrahConnect 2.0 (Based on Professional Design)
+// Dark theme with green gradient and gold accents
 
 export const colors = {
-  // Primary Brand Colors
+  // Primary Brand Colors (Green)
   primary: {
-    main: '#0d7c66',      // Teal Green (Trust, Islamic)
-    light: '#41b8a5',     // Light Teal
-    dark: '#095a4d',      // Dark Teal
-    50: '#f0fdf9',
-    100: '#ccfbef',
-    200: '#99f6e0',
-    300: '#5fe9d0',
-    400: '#2dd4bf',
-    500: '#0d7c66',
-    600: '#0a6b58',
-    700: '#085a4a',
-    800: '#06493c',
-    900: '#04382e',
+    main: '#0f6b3f',
+    light: '#14532d',
+    dark: '#0a4d2c',
+    gradient: 'linear-gradient(135deg, #0f6b3f 0%, #14532d 100%)',
   },
 
-  // Secondary/Accent Colors
+  // Secondary/Accent Colors (Gold)
   secondary: {
-    main: '#d4af37',      // Gold (Premium, Luxury)
-    light: '#f4d03f',     // Light Gold
-    dark: '#c19b2b',      // Dark Gold
+    main: '#d4af37',
+    light: '#f4d03f',
+    dark: '#b8942c',
+    gradient: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%)',
   },
 
-  // Semantic Colors
-  success: '#10b981',     // Green
-  warning: '#f59e0b',     // Orange
-  error: '#ef4444',       // Red
-  info: '#3b82f6',        // Blue
-
-  // Neutral Colors
-  neutral: {
-    white: '#ffffff',
-    black: '#000000',
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
-  },
-
-  // Background Colors
+  // Background Colors (Dark Theme)
   background: {
-    default: '#f8f9fa',
-    paper: '#ffffff',
-    dark: '#1a1a1a',
+    primary: '#0b0b0b',
+    secondary: '#0f1a14',
+    gradient: 'linear-gradient(180deg, #0b0b0b 0%, #0f1a14 50%, #0b0b0b 100%)',
+  },
+
+  // Glass Morphism
+  glass: {
+    card: 'rgba(255, 255, 255, 0.03)',
+    cardLight: 'rgba(255, 255, 255, 0.95)',
+    border: 'rgba(255, 255, 255, 0.08)',
   },
 
   // Text Colors
   text: {
-    primary: '#333333',
-    secondary: '#666666',
-    disabled: '#999999',
-    hint: '#cccccc',
+    primary: '#ffffff',
+    secondary: 'rgba(255, 255, 255, 0.9)',
+    muted: 'rgba(255, 255, 255, 0.6)',
+    dark: '#0b0b0b',
   },
+
+  // Semantic Colors
+  success: '#10b981',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  info: '#3b82f6',
 };
 
 export const typography = {
-  // Font Families
   fontFamily: {
-    primary: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
-    secondary: "'Poppins', sans-serif",
-    mono: "'Fira Code', 'Courier New', monospace",
+    primary: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    arabic: "'Amiri', serif",
   },
 
-  // Font Sizes
   fontSize: {
     xs: '0.75rem',      // 12px
     sm: '0.875rem',     // 14px
@@ -84,9 +64,9 @@ export const typography = {
     '4xl': '2.25rem',   // 36px
     '5xl': '3rem',      // 48px
     '6xl': '3.75rem',   // 60px
+    '7xl': '4.5rem',    // 72px
   },
 
-  // Font Weights
   fontWeight: {
     light: 300,
     regular: 400,
@@ -95,18 +75,9 @@ export const typography = {
     bold: 700,
     extrabold: 800,
   },
-
-  // Line Heights
-  lineHeight: {
-    tight: 1.2,
-    normal: 1.5,
-    relaxed: 1.75,
-    loose: 2,
-  },
 };
 
 export const spacing = {
-  // Spacing Scale (in rem)
   0: '0',
   1: '0.25rem',   // 4px
   2: '0.5rem',    // 8px
@@ -125,24 +96,70 @@ export const spacing = {
 
 export const borderRadius = {
   none: '0',
-  sm: '0.25rem',    // 4px
-  base: '0.5rem',   // 8px
-  md: '0.75rem',    // 12px
+  sm: '0.5rem',     // 8px
+  base: '0.75rem',  // 12px
   lg: '1rem',       // 16px
   xl: '1.5rem',     // 24px
   '2xl': '2rem',    // 32px
+  '3xl': '3rem',    // 48px
   full: '9999px',
 };
 
 export const shadows = {
   none: 'none',
   sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-  base: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+  base: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+  md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
   '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-  inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+  glow: '0 0 40px rgba(15, 107, 63, 0.3)',
+  glowPulse: '0 0 20px rgba(15, 107, 63, 0.3)',
+};
+
+export const animations = {
+  float: {
+    keyframes: `
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+    `,
+    animation: 'float 6s ease-in-out infinite',
+  },
+  pulseGlow: {
+    keyframes: `
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(15, 107, 63, 0.3); }
+        50% { box-shadow: 0 0 40px rgba(15, 107, 63, 0.5); }
+      }
+    `,
+    animation: 'pulse-glow 3s ease-in-out infinite',
+  },
+  fadeIn: {
+    keyframes: `
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    `,
+    animation: 'fadeIn 0.5s ease-in-out',
+  },
+  slideUp: {
+    keyframes: `
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `,
+    animation: 'slideUp 0.5s ease-out',
+  },
 };
 
 export const breakpoints = {
@@ -154,70 +171,12 @@ export const breakpoints = {
   '2xl': '1536px',
 };
 
-export const zIndex = {
-  dropdown: 1000,
-  sticky: 1020,
-  fixed: 1030,
-  modalBackdrop: 1040,
-  modal: 1050,
-  popover: 1060,
-  tooltip: 1070,
-};
-
-export const transitions = {
-  fast: '150ms ease-in-out',
-  base: '300ms ease-in-out',
-  slow: '500ms ease-in-out',
-};
-
-// Component-specific styles
-export const components = {
-  button: {
-    primary: {
-      background: colors.primary.main,
-      color: colors.neutral.white,
-      hover: colors.primary.dark,
-      shadow: shadows.md,
-    },
-    secondary: {
-      background: colors.secondary.main,
-      color: colors.neutral.white,
-      hover: colors.secondary.dark,
-      shadow: shadows.md,
-    },
-    outline: {
-      background: 'transparent',
-      color: colors.primary.main,
-      border: `2px solid ${colors.primary.main}`,
-      hover: colors.primary.main,
-    },
-  },
-
-  card: {
-    background: colors.background.paper,
-    border: `1px solid ${colors.neutral.200}`,
-    borderRadius: borderRadius.lg,
-    shadow: shadows.base,
-    hoverShadow: shadows.xl,
-  },
-
-  input: {
-    background: colors.background.paper,
-    border: `2px solid ${colors.neutral.200}`,
-    borderRadius: borderRadius.base,
-    focusBorder: colors.primary.main,
-    errorBorder: colors.error,
-  },
-};
-
 export default {
   colors,
   typography,
   spacing,
   borderRadius,
   shadows,
+  animations,
   breakpoints,
-  zIndex,
-  transitions,
-  components,
 };
