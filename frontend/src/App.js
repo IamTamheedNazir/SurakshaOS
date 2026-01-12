@@ -4,6 +4,7 @@ import './App.css';
 
 // Layout Components
 import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 
 // Pages
 import ProfessionalHomePage from './pages/ProfessionalHomePage';
@@ -15,11 +16,12 @@ function App() {
       <main className="main-content">
         <Routes>
           {/* Public Routes */}
-          <route path="/" element={<ProfessionalHomePage />} />
+          <Route path="/" element={<ProfessionalHomePage />} />
           
           {/* More routes will be added */}
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
