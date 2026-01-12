@@ -1,126 +1,170 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Facebook, 
+  Twitter, 
+  Instagram, 
+  Linkedin,
+  Youtube,
+  Send,
+} from 'lucide-react';
 import './Footer.css';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  const footerLinks = {
+    services: [
+      { name: 'Hajj Packages', href: '#hajj' },
+      { name: 'Umrah Packages', href: '#umrah' },
+      { name: 'Ziyarat Tours', href: '#ziyarat' },
+      { name: 'Hotels', href: '#hotels' },
+      { name: 'Visa Services', href: '#visa' },
+      { name: 'Forex Exchange', href: '#forex' },
+    ],
+    company: [
+      { name: 'About Us', href: '/about' },
+      { name: 'How It Works', href: '/how-it-works' },
+      { name: 'Become a Vendor', href: '/vendor-register' },
+      { name: 'Careers', href: '/careers' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Press', href: '/press' },
+    ],
+    support: [
+      { name: 'Help Center', href: '/help' },
+      { name: 'Contact Us', href: '/contact' },
+      { name: 'FAQs', href: '/faq' },
+      { name: 'Track Application', href: '/track' },
+      { name: 'Refund Policy', href: '/refund-policy' },
+      { name: 'Terms & Conditions', href: '/terms' },
+    ],
+    legal: [
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Cookie Policy', href: '/cookies' },
+      { name: 'Vendor Agreement', href: '/vendor-agreement' },
+      { name: 'User Agreement', href: '/user-agreement' },
+    ],
+  };
+
+  const socialLinks = [
+    { icon: <Facebook size={20} />, href: 'https://facebook.com', label: 'Facebook' },
+    { icon: <Twitter size={20} />, href: 'https://twitter.com', label: 'Twitter' },
+    { icon: <Instagram size={20} />, href: 'https://instagram.com', label: 'Instagram' },
+    { icon: <Linkedin size={20} />, href: 'https://linkedin.com', label: 'LinkedIn' },
+    { icon: <Youtube size={20} />, href: 'https://youtube.com', label: 'YouTube' },
+  ];
+
   return (
     <footer className="footer">
-      <div className="footer-top islamic-pattern-gold">
+      {/* Newsletter Section */}
+      <div className="footer-newsletter">
+        <div className="container">
+          <div className="newsletter-content">
+            <div className="newsletter-text">
+              <h3 className="newsletter-title">Stay Updated with Best Deals</h3>
+              <p className="newsletter-subtitle">
+                Subscribe to get exclusive Umrah & Hajj package offers directly in your inbox
+              </p>
+            </div>
+            <form className="newsletter-form">
+              <div className="newsletter-input-wrapper">
+                <Mail size={20} className="newsletter-icon" />
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  className="newsletter-input"
+                />
+              </div>
+              <button type="submit" className="newsletter-btn">
+                <span>Subscribe</span>
+                <Send size={18} />
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer */}
+      <div className="footer-main">
         <div className="container">
           <div className="footer-grid">
             {/* Company Info */}
-            <div className="footer-section">
-              <div className="footer-logo">
-                <span className="footer-logo-icon">☪️</span>
-                <div className="footer-logo-text">
-                  <span className="footer-logo-main">UmrahConnect</span>
-                  <span className="footer-logo-version">2.0</span>
+            <div className="footer-column footer-column-wide">
+              <Link to="/" className="footer-logo">
+                <div className="footer-logo-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L18.36 7 12 9.82 5.64 7 12 4.18zM4 8.27l7 3.5v7.96l-7-3.5V8.27zm9 11.46v-7.96l7-3.5v7.96l-7 3.5z" />
+                  </svg>
                 </div>
-              </div>
+                <div className="footer-logo-text">
+                  <span className="footer-logo-main">
+                    Umrah<span className="footer-logo-highlight">Connect</span>
+                  </span>
+                  <div className="footer-logo-tagline">Trusted Pilgrimage Marketplace</div>
+                </div>
+              </Link>
               <p className="footer-description">
-                The world's first comprehensive, verified marketplace for all Islamic pilgrimage services. 
-                Book Umrah, Hajj, and religious tours with complete transparency and trust.
+                India's largest marketplace connecting pilgrims with verified Umrah & Hajj service providers. 
+                Transparent pricing, trusted vendors, and seamless booking experience.
               </p>
-              <div className="footer-social">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Facebook">
-                  📘
-                </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Twitter">
-                  🐦
-                </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Instagram">
-                  📷
-                </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="LinkedIn">
-                  💼
-                </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="YouTube">
-                  📺
-                </a>
+              <div className="footer-contact">
+                <div className="footer-contact-item">
+                  <Phone size={16} />
+                  <span>+91 1800-123-4567</span>
+                </div>
+                <div className="footer-contact-item">
+                  <Mail size={16} />
+                  <span>support@umrahconnect.com</span>
+                </div>
+                <div className="footer-contact-item">
+                  <MapPin size={16} />
+                  <span>Mumbai, Maharashtra, India</span>
+                </div>
               </div>
             </div>
 
             {/* Services */}
-            <div className="footer-section">
-              <h4 className="footer-title">Services</h4>
+            <div className="footer-column">
+              <h4 className="footer-column-title">Services</h4>
               <ul className="footer-links">
-                <li><Link to="/packages?type=umrah">Umrah Packages</Link></li>
-                <li><Link to="/packages?type=hajj">Hajj Packages</Link></li>
-                <li><Link to="/packages?type=iran">Iran Tours</Link></li>
-                <li><Link to="/packages?type=iraq">Iraq Tours</Link></li>
-                <li><Link to="/packages?type=turkey">Turkey Tours</Link></li>
-                <li><Link to="/services/hotels">Hotels</Link></li>
-                <li><Link to="/services/transport">Transport</Link></li>
-                <li><Link to="/services/visa">Visa Services</Link></li>
+                {footerLinks.services.map((link, index) => (
+                  <li key={index}>
+                    <a href={link.href} className="footer-link">
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 
             {/* Company */}
-            <div className="footer-section">
-              <h4 className="footer-title">Company</h4>
+            <div className="footer-column">
+              <h4 className="footer-column-title">Company</h4>
               <ul className="footer-links">
-                <li><Link to="/about">About Us</Link></li>
-                <li><Link to="/how-it-works">How It Works</Link></li>
-                <li><Link to="/vendors">Become a Vendor</Link></li>
-                <li><Link to="/affiliate">Affiliate Program</Link></li>
-                <li><Link to="/careers">Careers</Link></li>
-                <li><Link to="/blog">Blog</Link></li>
-                <li><Link to="/press">Press Kit</Link></li>
-                <li><Link to="/contact">Contact Us</Link></li>
+                {footerLinks.company.map((link, index) => (
+                  <li key={index}>
+                    <Link to={link.href} className="footer-link">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
             {/* Support */}
-            <div className="footer-section">
-              <h4 className="footer-title">Support</h4>
+            <div className="footer-column">
+              <h4 className="footer-column-title">Support</h4>
               <ul className="footer-links">
-                <li><Link to="/help">Help Center</Link></li>
-                <li><Link to="/track">Track Application</Link></li>
-                <li><Link to="/faq">FAQs</Link></li>
-                <li><Link to="/terms">Terms & Conditions</Link></li>
-                <li><Link to="/privacy">Privacy Policy</Link></li>
-                <li><Link to="/refund">Refund Policy</Link></li>
-                <li><Link to="/cancellation">Cancellation Policy</Link></li>
-                <li><Link to="/sitemap">Sitemap</Link></li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div className="footer-section">
-              <h4 className="footer-title">Contact Us</h4>
-              <ul className="footer-contact">
-                <li>
-                  <span className="contact-icon">📞</span>
-                  <div>
-                    <strong>Phone</strong>
-                    <a href="tel:+911800XXXXXXX">+91 1800-XXX-XXXX</a>
-                  </div>
-                </li>
-                <li>
-                  <span className="contact-icon">📧</span>
-                  <div>
-                    <strong>Email</strong>
-                    <a href="mailto:support@umrahconnect.com">support@umrahconnect.com</a>
-                  </div>
-                </li>
-                <li>
-                  <span className="contact-icon">💬</span>
-                  <div>
-                    <strong>WhatsApp</strong>
-                    <a href="https://wa.me/911800XXXXXXX" target="_blank" rel="noopener noreferrer">
-                      Chat with us
-                    </a>
-                  </div>
-                </li>
-                <li>
-                  <span className="contact-icon">🕐</span>
-                  <div>
-                    <strong>Support Hours</strong>
-                    <span>24/7 Available</span>
-                  </div>
-                </li>
+                {footerLinks.support.map((link, index) => (
+                  <li key={index}>
+                    <Link to={link.href} className="footer-link">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -131,52 +175,68 @@ const Footer = () => {
       <div className="footer-bottom">
         <div className="container">
           <div className="footer-bottom-content">
-            <div className="footer-copyright">
-              <p>© {currentYear} UmrahConnect 2.0. All rights reserved.</p>
-              <p className="footer-tagline">
-                Built with ❤️ for the Muslim Ummah
+            <div className="footer-bottom-left">
+              <p className="footer-copyright">
+                © {currentYear} UmrahConnect. All rights reserved.
               </p>
-            </div>
-
-            <div className="footer-badges">
-              <div className="footer-badge">
-                <span>🔒</span>
-                <span>Secure Payments</span>
-              </div>
-              <div className="footer-badge">
-                <span>✓</span>
-                <span>Verified Platform</span>
-              </div>
-              <div className="footer-badge">
-                <span>🏆</span>
-                <span>Trusted by 25K+</span>
-              </div>
-              <div className="footer-badge">
-                <span>⭐</span>
-                <span>4.8/5 Rating</span>
+              <div className="footer-legal-links">
+                {footerLinks.legal.map((link, index) => (
+                  <Link key={index} to={link.href} className="footer-legal-link">
+                    {link.name}
+                  </Link>
+                ))}
               </div>
             </div>
-
-            <div className="footer-payment-methods">
-              <p className="footer-payment-title">We Accept</p>
-              <div className="payment-icons">
-                <span className="payment-icon" title="Visa">💳</span>
-                <span className="payment-icon" title="Mastercard">💳</span>
-                <span className="payment-icon" title="UPI">📱</span>
-                <span className="payment-icon" title="Net Banking">🏦</span>
-                <span className="payment-icon" title="Wallets">💰</span>
-              </div>
+            <div className="footer-social">
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-social-link"
+                  aria-label={social.label}
+                >
+                  {social.icon}
+                </a>
+              ))}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Islamic Quote */}
-          <div className="footer-quote">
-            <p className="arabic-text">
-              ﴿ وَأَذِّن فِي النَّاسِ بِالْحَجِّ ﴾
-            </p>
-            <p className="footer-quote-translation">
-              "And proclaim to the people the Hajj" - Quran 22:27
-            </p>
+      {/* Trust Badges */}
+      <div className="footer-trust">
+        <div className="container">
+          <div className="trust-badges">
+            <div className="trust-badge">
+              <div className="trust-badge-icon">🔒</div>
+              <div className="trust-badge-text">
+                <div className="trust-badge-title">Secure Payments</div>
+                <div className="trust-badge-subtitle">SSL Encrypted</div>
+              </div>
+            </div>
+            <div className="trust-badge">
+              <div className="trust-badge-icon">✓</div>
+              <div className="trust-badge-text">
+                <div className="trust-badge-title">Verified Vendors</div>
+                <div className="trust-badge-subtitle">500+ Partners</div>
+              </div>
+            </div>
+            <div className="trust-badge">
+              <div className="trust-badge-icon">⭐</div>
+              <div className="trust-badge-text">
+                <div className="trust-badge-title">4.9 Rating</div>
+                <div className="trust-badge-subtitle">50K+ Reviews</div>
+              </div>
+            </div>
+            <div className="trust-badge">
+              <div className="trust-badge-icon">🏆</div>
+              <div className="trust-badge-text">
+                <div className="trust-badge-title">Award Winning</div>
+                <div className="trust-badge-subtitle">Best Platform 2024</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
