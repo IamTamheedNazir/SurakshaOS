@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { packagesAPI } from '../services/api';
 import PackageCard from '../components/packages/PackageCard';
@@ -16,6 +16,8 @@ const PackagesPage = () => {
     duration: searchParams.get('duration') || '',
     sortBy: searchParams.get('sortBy') || 'popular',
     search: searchParams.get('search') || '',
+    category: searchParams.get('category') || '',
+    featured: searchParams.get('featured') || '',
   });
 
   const [showFilters, setShowFilters] = useState(false);
@@ -29,98 +31,241 @@ const PackagesPage = () => {
     }
   );
 
-  // Mock data for development
+  // Extended mock data for development
   const mockPackages = [
     {
-      id: '1',
-      title: 'Economy Umrah Package - 15 Days',
-      packageType: 'umrah',
-      serviceClass: 'economy',
+      id: 1,
+      title: 'Premium Umrah Package - 15 Days',
+      vendor: { name: 'Al-Haramain Tours', id: 'vendor-1', verified: true, trustScore: 98 },
+      price: 145000,
+      discountedPrice: 135000,
+      rating: 4.8,
+      reviews: 234,
+      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400',
       duration: 15,
       departureCity: 'Mumbai',
-      basePrice: 85000,
-      discountedPrice: 75000,
-      makkahDays: 8,
-      madinahDays: 7,
-      hotelDetails: {
-        makkah: { name: 'Al Safwah Hotel', stars: 3, distance: '500m from Haram' },
-        madinah: { name: 'Dar Al Eiman Hotel', stars: 3, distance: '300m from Masjid' }
-      },
-      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport', 'Ziyarat'],
-      rating: 4.5,
-      reviewsCount: 234,
-      seatsRemaining: 12,
-      featured: true,
-      vendor: { name: 'Al Haramain Tours', trustScore: 95 }
-    },
-    {
-      id: '2',
-      title: 'Gold Umrah Package - 15 Days',
       packageType: 'umrah',
-      serviceClass: 'gold',
-      duration: 15,
-      departureCity: 'Delhi',
-      basePrice: 125000,
-      discountedPrice: 110000,
-      makkahDays: 8,
-      madinahDays: 7,
-      hotelDetails: {
-        makkah: { name: 'Swissotel Makkah', stars: 5, distance: '100m from Haram' },
-        madinah: { name: 'Pullman Zamzam', stars: 5, distance: '50m from Masjid' }
-      },
-      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport', 'Ziyarat', 'Meals'],
-      rating: 4.8,
-      reviewsCount: 456,
+      serviceClass: 'premium',
+      verified: true,
+      featured: true,
+      topSeller: true,
       seatsRemaining: 8,
-      featured: true,
-      vendor: { name: 'Makkah Express', trustScore: 98 }
+      makkahDays: 8,
+      madinahDays: 7,
+      inclusions: ['Visa', 'Flights', '5-Star Hotels', 'Transport', 'Ziyarat', 'Meals'],
     },
     {
-      id: '3',
-      title: 'Diamond Umrah Package - 20 Days',
-      packageType: 'umrah',
-      serviceClass: 'diamond',
-      duration: 20,
-      departureCity: 'Bangalore',
-      basePrice: 185000,
-      discountedPrice: 165000,
-      makkahDays: 12,
-      madinahDays: 8,
-      hotelDetails: {
-        makkah: { name: 'Fairmont Makkah', stars: 5, distance: 'Connected to Haram' },
-        madinah: { name: 'Oberoi Madinah', stars: 5, distance: 'Haram View' }
-      },
-      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport', 'Ziyarat', 'Meals', 'Guide'],
-      rating: 4.9,
-      reviewsCount: 789,
-      seatsRemaining: 5,
-      featured: true,
-      vendor: { name: 'Premium Hajj & Umrah', trustScore: 99 }
-    },
-    {
-      id: '4',
-      title: 'Budget Umrah Package - 10 Days',
+      id: 2,
+      title: 'Economy Umrah Package - 10 Days',
+      vendor: { name: 'Makkah Express', id: 'vendor-2', verified: true, trustScore: 95 },
+      price: 75000,
+      discountedPrice: 68000,
+      rating: 4.6,
+      reviews: 189,
+      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400',
+      duration: 10,
+      departureCity: 'Delhi',
       packageType: 'umrah',
       serviceClass: 'economy',
-      duration: 10,
-      departureCity: 'Hyderabad',
-      basePrice: 65000,
-      discountedPrice: 58000,
+      verified: true,
+      topSeller: true,
+      seatsRemaining: 15,
       makkahDays: 5,
       madinahDays: 5,
-      hotelDetails: {
-        makkah: { name: 'Al Kiswah Hotel', stars: 3, distance: '800m from Haram' },
-        madinah: { name: 'Al Aqeeq Hotel', stars: 3, distance: '500m from Masjid' }
-      },
-      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport'],
-      rating: 4.3,
-      reviewsCount: 156,
+      inclusions: ['Visa', 'Flights', '3-Star Hotels', 'Transport'],
+    },
+    {
+      id: 3,
+      title: 'Luxury Hajj Package - 30 Days',
+      vendor: { name: 'Royal Pilgrimage', id: 'vendor-3', verified: true, trustScore: 99 },
+      price: 450000,
+      discountedPrice: 425000,
+      rating: 4.9,
+      reviews: 156,
+      image: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=400',
+      duration: 30,
+      departureCity: 'Bangalore',
+      packageType: 'hajj',
+      serviceClass: 'diamond',
+      verified: true,
+      featured: true,
+      topSeller: true,
+      seatsRemaining: 5,
+      makkahDays: 20,
+      madinahDays: 10,
+      inclusions: ['Visa', 'Flights', '5-Star Hotels', 'Transport', 'Ziyarat', 'Meals', 'Guide'],
+    },
+    {
+      id: 4,
+      title: 'Budget Umrah Package - 7 Days',
+      vendor: { name: 'Quick Umrah', id: 'vendor-4', verified: true, trustScore: 92 },
+      price: 55000,
+      discountedPrice: 52000,
+      rating: 4.4,
+      reviews: 298,
+      image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=400',
+      duration: 7,
+      departureCity: 'Hyderabad',
+      packageType: 'umrah',
+      serviceClass: 'economy',
+      verified: true,
       seatsRemaining: 20,
-      vendor: { name: 'Budget Umrah Services', trustScore: 92 }
+      makkahDays: 4,
+      madinahDays: 3,
+      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport'],
+    },
+    {
+      id: 5,
+      title: 'Family Umrah Package - 12 Days',
+      vendor: { name: 'Family Tours', id: 'vendor-5', verified: true, trustScore: 96 },
+      price: 180000,
+      discountedPrice: 165000,
+      rating: 4.7,
+      reviews: 167,
+      image: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=400',
+      duration: 12,
+      departureCity: 'Chennai',
+      packageType: 'umrah',
+      serviceClass: 'gold',
+      verified: true,
+      featured: true,
+      seatsRemaining: 10,
+      makkahDays: 7,
+      madinahDays: 5,
+      inclusions: ['Visa', 'Flights', '4-Star Hotels', 'Transport', 'Ziyarat', 'Family Rooms'],
+    },
+    {
+      id: 6,
+      title: 'VIP Umrah Package - 20 Days',
+      vendor: { name: 'Elite Pilgrimage', id: 'vendor-6', verified: true, trustScore: 97 },
+      price: 285000,
+      discountedPrice: 265000,
+      rating: 4.9,
+      reviews: 89,
+      image: 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=400',
+      duration: 20,
+      departureCity: 'Kolkata',
+      packageType: 'umrah',
+      serviceClass: 'platinum',
+      verified: true,
+      featured: true,
+      topSeller: true,
+      seatsRemaining: 6,
+      makkahDays: 12,
+      madinahDays: 8,
+      inclusions: ['Visa', 'Flights', '5-Star Hotels', 'Transport', 'Ziyarat', 'Meals', 'VIP Services'],
+    },
+    {
+      id: 7,
+      title: 'Group Umrah Package - 14 Days',
+      vendor: { name: 'Community Tours', id: 'vendor-7', verified: true, trustScore: 94 },
+      price: 95000,
+      discountedPrice: 88000,
+      rating: 4.5,
+      reviews: 312,
+      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400',
+      duration: 14,
+      departureCity: 'Pune',
+      packageType: 'umrah',
+      serviceClass: 'economy',
+      verified: true,
+      seatsRemaining: 25,
+      makkahDays: 8,
+      madinahDays: 6,
+      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport', 'Group Discounts'],
+    },
+    {
+      id: 8,
+      title: 'Ramadan Special Package - 21 Days',
+      vendor: { name: 'Blessed Journey', id: 'vendor-8', verified: true, trustScore: 98 },
+      price: 195000,
+      discountedPrice: 185000,
+      rating: 4.8,
+      reviews: 201,
+      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400',
+      duration: 21,
+      departureCity: 'Ahmedabad',
+      packageType: 'umrah',
+      serviceClass: 'gold',
+      verified: true,
+      featured: true,
+      topSeller: true,
+      seatsRemaining: 12,
+      makkahDays: 12,
+      madinahDays: 9,
+      inclusions: ['Visa', 'Flights', '4-Star Hotels', 'Transport', 'Ziyarat', 'Iftar Meals'],
     },
   ];
 
-  const packages = data?.data || mockPackages;
+  // Filter packages based on search and filters
+  const filterPackages = (pkgs) => {
+    return pkgs.filter(pkg => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch = 
+          pkg.title.toLowerCase().includes(searchLower) ||
+          pkg.vendor.name.toLowerCase().includes(searchLower) ||
+          pkg.departureCity.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Type filter
+      if (filters.type && pkg.packageType !== filters.type) return false;
+
+      // Service class filter
+      if (filters.serviceClass && pkg.serviceClass !== filters.serviceClass) return false;
+
+      // Departure city filter
+      if (filters.departureCity && pkg.departureCity !== filters.departureCity) return false;
+
+      // Duration filter
+      if (filters.duration && pkg.duration !== parseInt(filters.duration)) return false;
+
+      // Price range filter
+      if (filters.minPrice && pkg.discountedPrice < parseInt(filters.minPrice)) return false;
+      if (filters.maxPrice && pkg.discountedPrice > parseInt(filters.maxPrice)) return false;
+
+      // Category filter (from homepage)
+      if (filters.category) {
+        const category = filters.category.toLowerCase();
+        if (category.includes('economy') && pkg.serviceClass !== 'economy') return false;
+        if (category.includes('premium') && pkg.serviceClass !== 'premium') return false;
+        if (category.includes('luxury') && !['diamond', 'platinum'].includes(pkg.serviceClass)) return false;
+        if (category.includes('family') && !pkg.title.toLowerCase().includes('family')) return false;
+        if (category.includes('group') && !pkg.title.toLowerCase().includes('group')) return false;
+        if (category.includes('ramadan') && !pkg.title.toLowerCase().includes('ramadan')) return false;
+      }
+
+      // Featured filter
+      if (filters.featured === 'true' && !pkg.featured) return false;
+
+      return true;
+    });
+  };
+
+  // Sort packages
+  const sortPackages = (pkgs) => {
+    const sorted = [...pkgs];
+    switch (filters.sortBy) {
+      case 'price-low':
+        return sorted.sort((a, b) => a.discountedPrice - b.discountedPrice);
+      case 'price-high':
+        return sorted.sort((a, b) => b.discountedPrice - a.discountedPrice);
+      case 'rating':
+        return sorted.sort((a, b) => b.rating - a.rating);
+      case 'newest':
+        return sorted.reverse();
+      case 'popular':
+      default:
+        return sorted.sort((a, b) => b.reviews - a.reviews);
+    }
+  };
+
+  const allPackages = data?.data || mockPackages;
+  const filteredPackages = filterPackages(allPackages);
+  const packages = sortPackages(filteredPackages);
+  const topSellers = packages.filter(pkg => pkg.topSeller).slice(0, 4);
 
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
@@ -144,6 +289,8 @@ const PackagesPage = () => {
       duration: '',
       sortBy: 'popular',
       search: '',
+      category: '',
+      featured: '',
     });
     setSearchParams({});
   };
@@ -152,37 +299,79 @@ const PackagesPage = () => {
 
   return (
     <div className="packages-page">
-      <div className="container">
-        {/* Page Header */}
-        <div className="packages-header">
-          <div className="packages-header-content">
-            <h1 className="packages-title">
-              {filters.type ? `${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)} Packages` : 'All Packages'}
-            </h1>
-            <p className="packages-subtitle">
-              Browse {packages.length}+ verified packages from trusted vendors
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="packages-search">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search packages..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-            <button className="search-btn">
-              <span>🔍</span>
-            </button>
+      {/* Banner Section */}
+      <section className="packages-banner">
+        <div className="banner-overlay"></div>
+        <div className="container banner-content">
+          <h1 className="banner-title">
+            {filters.category ? filters.category : 
+             filters.type ? `${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)} Packages` : 
+             'Explore All Packages'}
+          </h1>
+          <p className="banner-subtitle">
+            Compare and book from 1,000+ verified packages across 500+ trusted vendors
+          </p>
+          
+          {/* Search Bar in Banner */}
+          <div className="banner-search">
+            <div className="search-input-wrapper">
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search by package name, vendor, or destination..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+            <button className="search-btn">Search</button>
           </div>
         </div>
+      </section>
+
+      <div className="container">
+        {/* Top Sellers Section */}
+        {topSellers.length > 0 && !filters.search && (
+          <section className="top-sellers-section">
+            <div className="section-header">
+              <div>
+                <h2 className="section-title">🔥 Top Selling Packages</h2>
+                <p className="section-subtitle">Most popular packages chosen by pilgrims</p>
+              </div>
+            </div>
+            <div className="top-sellers-grid">
+              {topSellers.map((pkg) => (
+                <Link to={`/packages/${pkg.id}`} key={pkg.id} className="top-seller-card">
+                  <div className="top-seller-image-wrapper">
+                    <img src={pkg.image} alt={pkg.title} className="top-seller-image" />
+                    <span className="top-seller-badge">🔥 Top Seller</span>
+                  </div>
+                  <div className="top-seller-content">
+                    <div className="vendor-info">
+                      {pkg.vendor.verified && <span className="verified-icon">✓</span>}
+                      <span className="vendor-name">{pkg.vendor.name}</span>
+                    </div>
+                    <h3 className="top-seller-title">{pkg.title}</h3>
+                    <div className="top-seller-meta">
+                      <span>⭐ {pkg.rating}</span>
+                      <span>📅 {pkg.duration} Days</span>
+                      <span>✈️ {pkg.departureCity}</span>
+                    </div>
+                    <div className="top-seller-price">
+                      <span className="price-original">₹{pkg.price.toLocaleString()}</span>
+                      <span className="price-current">₹{pkg.discountedPrice.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Filters Bar */}
         <div className="packages-filters-bar">
           <button
-            className="filter-toggle-btn"
+            className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
           >
             <span>🎛️</span>
@@ -214,6 +403,7 @@ const PackagesPage = () => {
               <option value="">All Classes</option>
               <option value="economy">Economy</option>
               <option value="gold">Gold</option>
+              <option value="premium">Premium</option>
               <option value="diamond">Diamond</option>
               <option value="platinum">Platinum</option>
             </select>
@@ -257,6 +447,8 @@ const PackagesPage = () => {
                   <option value="Hyderabad">Hyderabad</option>
                   <option value="Kolkata">Kolkata</option>
                   <option value="Chennai">Chennai</option>
+                  <option value="Pune">Pune</option>
+                  <option value="Ahmedabad">Ahmedabad</option>
                 </select>
               </div>
 
@@ -269,11 +461,14 @@ const PackagesPage = () => {
                   onChange={(e) => handleFilterChange('duration', e.target.value)}
                 >
                   <option value="">Any Duration</option>
+                  <option value="7">7 Days</option>
                   <option value="10">10 Days</option>
+                  <option value="12">12 Days</option>
+                  <option value="14">14 Days</option>
                   <option value="15">15 Days</option>
                   <option value="20">20 Days</option>
+                  <option value="21">21 Days</option>
                   <option value="30">30 Days</option>
-                  <option value="40">40 Days</option>
                 </select>
               </div>
 
@@ -324,11 +519,14 @@ const PackagesPage = () => {
           {!isLoading && !error && packages.length > 0 && (
             <>
               <div className="packages-results-info">
-                <p>Showing {packages.length} packages</p>
+                <p>
+                  <strong>{packages.length}</strong> packages found
+                  {filters.search && ` for "${filters.search}"`}
+                </p>
               </div>
               <div className="packages-grid">
-                {packages.map((pkg, index) => (
-                  <PackageCard key={pkg.id} package={pkg} index={index} />
+                {packages.map((pkg) => (
+                  <PackageCard key={pkg.id} package={pkg} />
                 ))}
               </div>
             </>
