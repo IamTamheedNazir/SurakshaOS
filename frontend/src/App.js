@@ -16,6 +16,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import VendorDashboardPage from './pages/vendor/VendorDashboardPage';
+import VendorProfilePage from './pages/VendorProfilePage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -33,6 +34,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/packages" element={<PackagesPage />} />
           <Route path="/packages/:id" element={<PackageDetailPage />} />
+          <Route path="/vendors/:vendorId" element={<VendorProfilePage />} />
           <Route path="/track" element={<TrackingPage />} />
           <Route path="/track/:bookingNumber" element={<TrackingPage />} />
           <Route path="/about" element={<AboutPage />} />
