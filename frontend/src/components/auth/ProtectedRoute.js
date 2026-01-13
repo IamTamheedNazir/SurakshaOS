@@ -1,30 +1,37 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import useAuthStore from '../../store/authStore';
+import { useAuth } from '../../context/AuthContext';
+import './ProtectedRoute.css';
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, user } = useAuthStore();
+const ProtectedRoute = ({ children, requireAuth = true, redirectTo = '/login' }) => {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Check if user is authenticated
-  if (!isAuthenticated) {
-    // Redirect to login page with return URL
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="protected-route-loading">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p className="loading-text">Verifying authentication...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Check if specific role is required
-  if (requiredRole && user?.userType !== requiredRole) {
-    // Redirect to appropriate dashboard based on user type
-    if (user?.userType === 'vendor') {
-      return <Navigate to="/vendor" replace />;
-    } else if (user?.userType === 'admin') {
-      return <Navigate to="/admin" replace />;
-    } else {
-      return <Navigate to="/dashboard" replace />;
-    }
+  // If route requires authentication and user is not logged in
+  if (requireAuth && !user) {
+    // Redirect to login page but save the attempted location
+    return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // User is authenticated and has correct role
+  // If route requires NO authentication (like login/register) and user IS logged in
+  if (!requireAuth && user) {
+    // Redirect to dashboard or home
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // User is authenticated or route doesn't require auth
   return children;
 };
 
