@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import { packagesAPI } from '../services/api';
-import PackageCard from '../components/packages/PackageCard';
 import './PackagesPage.css';
 
 const PackagesPage = () => {
@@ -21,17 +18,9 @@ const PackagesPage = () => {
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch packages with filters
-  const { data, isLoading, error } = useQuery(
-    ['packages', filters],
-    () => packagesAPI.getAll(filters),
-    {
-      keepPreviousData: true,
-    }
-  );
-
-  // Extended mock data for development
+  // Mock packages data
   const mockPackages = [
     {
       id: 1,
@@ -41,7 +30,7 @@ const PackagesPage = () => {
       discountedPrice: 135000,
       rating: 4.8,
       reviews: 234,
-      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400',
+      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800',
       duration: 15,
       departureCity: 'Mumbai',
       packageType: 'umrah',
@@ -62,7 +51,7 @@ const PackagesPage = () => {
       discountedPrice: 68000,
       rating: 4.6,
       reviews: 189,
-      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400',
+      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800',
       duration: 10,
       departureCity: 'Delhi',
       packageType: 'umrah',
@@ -76,13 +65,13 @@ const PackagesPage = () => {
     },
     {
       id: 3,
-      title: 'Luxury Hajj Package - 30 Days',
+      title: 'Luxury Hajj Package 2025 - 30 Days',
       vendor: { name: 'Royal Pilgrimage', id: 'vendor-3', verified: true, trustScore: 99 },
       price: 450000,
       discountedPrice: 425000,
       rating: 4.9,
       reviews: 156,
-      image: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=400',
+      image: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=800',
       duration: 30,
       departureCity: 'Bangalore',
       packageType: 'hajj',
@@ -103,7 +92,7 @@ const PackagesPage = () => {
       discountedPrice: 52000,
       rating: 4.4,
       reviews: 298,
-      image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=400',
+      image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800',
       duration: 7,
       departureCity: 'Hyderabad',
       packageType: 'umrah',
@@ -122,7 +111,7 @@ const PackagesPage = () => {
       discountedPrice: 165000,
       rating: 4.7,
       reviews: 167,
-      image: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=400',
+      image: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800',
       duration: 12,
       departureCity: 'Chennai',
       packageType: 'umrah',
@@ -142,7 +131,7 @@ const PackagesPage = () => {
       discountedPrice: 265000,
       rating: 4.9,
       reviews: 89,
-      image: 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=400',
+      image: 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800',
       duration: 20,
       departureCity: 'Kolkata',
       packageType: 'umrah',
@@ -163,7 +152,7 @@ const PackagesPage = () => {
       discountedPrice: 88000,
       rating: 4.5,
       reviews: 312,
-      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400',
+      image: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800',
       duration: 14,
       departureCity: 'Pune',
       packageType: 'umrah',
@@ -182,7 +171,7 @@ const PackagesPage = () => {
       discountedPrice: 185000,
       rating: 4.8,
       reviews: 201,
-      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400',
+      image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800',
       duration: 21,
       departureCity: 'Ahmedabad',
       packageType: 'umrah',
@@ -195,12 +184,89 @@ const PackagesPage = () => {
       madinahDays: 9,
       inclusions: ['Visa', 'Flights', '4-Star Hotels', 'Transport', 'Ziyarat', 'Iftar Meals'],
     },
+    {
+      id: 9,
+      title: 'Standard Hajj Package 2025 - 25 Days',
+      vendor: { name: 'Hajj Services', id: 'vendor-9', verified: true, trustScore: 93 },
+      price: 320000,
+      discountedPrice: 305000,
+      rating: 4.6,
+      reviews: 178,
+      image: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=800',
+      duration: 25,
+      departureCity: 'Mumbai',
+      packageType: 'hajj',
+      serviceClass: 'gold',
+      verified: true,
+      seatsRemaining: 18,
+      makkahDays: 15,
+      madinahDays: 10,
+      inclusions: ['Visa', 'Flights', '4-Star Hotels', 'Transport', 'Ziyarat', 'Meals'],
+    },
+    {
+      id: 10,
+      title: 'Express Umrah Package - 5 Days',
+      vendor: { name: 'Swift Umrah', id: 'vendor-10', verified: true, trustScore: 91 },
+      price: 48000,
+      discountedPrice: 45000,
+      rating: 4.3,
+      reviews: 256,
+      image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800',
+      duration: 5,
+      departureCity: 'Delhi',
+      packageType: 'umrah',
+      serviceClass: 'economy',
+      verified: true,
+      seatsRemaining: 30,
+      makkahDays: 3,
+      madinahDays: 2,
+      inclusions: ['Visa', 'Flights', 'Hotels', 'Transport'],
+    },
+    {
+      id: 11,
+      title: 'Deluxe Umrah Package - 18 Days',
+      vendor: { name: 'Premium Travels', id: 'vendor-11', verified: true, trustScore: 97 },
+      price: 225000,
+      discountedPrice: 210000,
+      rating: 4.8,
+      reviews: 143,
+      image: 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?w=800',
+      duration: 18,
+      departureCity: 'Bangalore',
+      packageType: 'umrah',
+      serviceClass: 'premium',
+      verified: true,
+      featured: true,
+      seatsRemaining: 9,
+      makkahDays: 10,
+      madinahDays: 8,
+      inclusions: ['Visa', 'Flights', '5-Star Hotels', 'Transport', 'Ziyarat', 'Meals', 'Guide'],
+    },
+    {
+      id: 12,
+      title: 'Senior Citizen Umrah Package - 16 Days',
+      vendor: { name: 'Care Pilgrimage', id: 'vendor-12', verified: true, trustScore: 96 },
+      price: 175000,
+      discountedPrice: 165000,
+      rating: 4.9,
+      reviews: 98,
+      image: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800',
+      duration: 16,
+      departureCity: 'Chennai',
+      packageType: 'umrah',
+      serviceClass: 'gold',
+      verified: true,
+      featured: true,
+      seatsRemaining: 7,
+      makkahDays: 9,
+      madinahDays: 7,
+      inclusions: ['Visa', 'Flights', '4-Star Hotels', 'Transport', 'Wheelchair', 'Medical Support'],
+    },
   ];
 
-  // Filter packages based on search and filters
+  // Filter packages
   const filterPackages = (pkgs) => {
     return pkgs.filter(pkg => {
-      // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesSearch = 
@@ -210,34 +276,12 @@ const PackagesPage = () => {
         if (!matchesSearch) return false;
       }
 
-      // Type filter
       if (filters.type && pkg.packageType !== filters.type) return false;
-
-      // Service class filter
       if (filters.serviceClass && pkg.serviceClass !== filters.serviceClass) return false;
-
-      // Departure city filter
       if (filters.departureCity && pkg.departureCity !== filters.departureCity) return false;
-
-      // Duration filter
       if (filters.duration && pkg.duration !== parseInt(filters.duration)) return false;
-
-      // Price range filter
       if (filters.minPrice && pkg.discountedPrice < parseInt(filters.minPrice)) return false;
       if (filters.maxPrice && pkg.discountedPrice > parseInt(filters.maxPrice)) return false;
-
-      // Category filter (from homepage)
-      if (filters.category) {
-        const category = filters.category.toLowerCase();
-        if (category.includes('economy') && pkg.serviceClass !== 'economy') return false;
-        if (category.includes('premium') && pkg.serviceClass !== 'premium') return false;
-        if (category.includes('luxury') && !['diamond', 'platinum'].includes(pkg.serviceClass)) return false;
-        if (category.includes('family') && !pkg.title.toLowerCase().includes('family')) return false;
-        if (category.includes('group') && !pkg.title.toLowerCase().includes('group')) return false;
-        if (category.includes('ramadan') && !pkg.title.toLowerCase().includes('ramadan')) return false;
-      }
-
-      // Featured filter
       if (filters.featured === 'true' && !pkg.featured) return false;
 
       return true;
@@ -254,6 +298,10 @@ const PackagesPage = () => {
         return sorted.sort((a, b) => b.discountedPrice - a.discountedPrice);
       case 'rating':
         return sorted.sort((a, b) => b.rating - a.rating);
+      case 'duration-short':
+        return sorted.sort((a, b) => a.duration - b.duration);
+      case 'duration-long':
+        return sorted.sort((a, b) => b.duration - a.duration);
       case 'newest':
         return sorted.reverse();
       case 'popular':
@@ -262,8 +310,7 @@ const PackagesPage = () => {
     }
   };
 
-  const allPackages = data?.data || mockPackages;
-  const filteredPackages = filterPackages(allPackages);
+  const filteredPackages = filterPackages(mockPackages);
   const packages = sortPackages(filteredPackages);
   const topSellers = packages.filter(pkg => pkg.topSeller).slice(0, 4);
 
@@ -271,7 +318,6 @@ const PackagesPage = () => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     
-    // Update URL params
     const params = new URLSearchParams();
     Object.keys(newFilters).forEach(k => {
       if (newFilters[k]) params.set(k, newFilters[k]);
@@ -301,21 +347,21 @@ const PackagesPage = () => {
     <div className="packages-page">
       {/* Banner Section */}
       <section className="packages-banner">
-        <div className="banner-overlay"></div>
-        <div className="container banner-content">
+        <div className="islamic-pattern-bg"></div>
+        <div className="banner-content">
           <h1 className="banner-title">
-            {filters.category ? filters.category : 
-             filters.type ? `${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)} Packages` : 
-             'Explore All Packages'}
+            {filters.type ? `${filters.type.charAt(0).toUpperCase() + filters.type.slice(1)} Packages` : 'Explore All Packages'}
           </h1>
           <p className="banner-subtitle">
             Compare and book from 1,000+ verified packages across 500+ trusted vendors
           </p>
           
-          {/* Search Bar in Banner */}
+          {/* Search Bar */}
           <div className="banner-search">
             <div className="search-input-wrapper">
-              <span className="search-icon">🔍</span>
+              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               <input
                 type="text"
                 className="search-input"
@@ -324,20 +370,17 @@ const PackagesPage = () => {
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
             </div>
-            <button className="search-btn">Search</button>
           </div>
         </div>
       </section>
 
-      <div className="container">
+      <div className="packages-container">
         {/* Top Sellers Section */}
         {topSellers.length > 0 && !filters.search && (
           <section className="top-sellers-section">
             <div className="section-header">
-              <div>
-                <h2 className="section-title">🔥 Top Selling Packages</h2>
-                <p className="section-subtitle">Most popular packages chosen by pilgrims</p>
-              </div>
+              <h2 className="section-title">🔥 Top Selling Packages</h2>
+              <p className="section-subtitle">Most popular packages chosen by pilgrims</p>
             </div>
             <div className="top-sellers-grid">
               {topSellers.map((pkg) => (
@@ -345,21 +388,31 @@ const PackagesPage = () => {
                   <div className="top-seller-image-wrapper">
                     <img src={pkg.image} alt={pkg.title} className="top-seller-image" />
                     <span className="top-seller-badge">🔥 Top Seller</span>
+                    {pkg.seatsRemaining <= 10 && (
+                      <span className="seats-badge">{pkg.seatsRemaining} seats left</span>
+                    )}
                   </div>
                   <div className="top-seller-content">
                     <div className="vendor-info">
-                      {pkg.vendor.verified && <span className="verified-icon">✓</span>}
+                      {pkg.vendor.verified && (
+                        <svg className="verified-icon" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
                       <span className="vendor-name">{pkg.vendor.name}</span>
                     </div>
                     <h3 className="top-seller-title">{pkg.title}</h3>
                     <div className="top-seller-meta">
-                      <span>⭐ {pkg.rating}</span>
-                      <span>📅 {pkg.duration} Days</span>
-                      <span>✈️ {pkg.departureCity}</span>
+                      <span className="meta-item">⭐ {pkg.rating}</span>
+                      <span className="meta-item">📅 {pkg.duration} Days</span>
+                      <span className="meta-item">✈️ {pkg.departureCity}</span>
                     </div>
                     <div className="top-seller-price">
                       <span className="price-original">₹{pkg.price.toLocaleString()}</span>
                       <span className="price-current">₹{pkg.discountedPrice.toLocaleString()}</span>
+                      <span className="price-discount">
+                        {Math.round(((pkg.price - pkg.discountedPrice) / pkg.price) * 100)}% OFF
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -374,8 +427,10 @@ const PackagesPage = () => {
             className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
           >
-            <span>🎛️</span>
-            Filters
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span>Filters</span>
             {activeFiltersCount > 0 && (
               <span className="filter-count">{activeFiltersCount}</span>
             )}
@@ -390,9 +445,6 @@ const PackagesPage = () => {
               <option value="">All Types</option>
               <option value="umrah">Umrah</option>
               <option value="hajj">Hajj</option>
-              <option value="iran">Iran Tours</option>
-              <option value="iraq">Iraq Tours</option>
-              <option value="turkey">Turkey Tours</option>
             </select>
 
             <select
@@ -417,12 +469,17 @@ const PackagesPage = () => {
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
               <option value="rating">Highest Rated</option>
+              <option value="duration-short">Duration: Short to Long</option>
+              <option value="duration-long">Duration: Long to Short</option>
               <option value="newest">Newest First</option>
             </select>
           </div>
 
           {activeFiltersCount > 0 && (
             <button className="clear-filters-btn" onClick={clearFilters}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Clear All
             </button>
           )}
@@ -432,9 +489,13 @@ const PackagesPage = () => {
         {showFilters && (
           <div className="advanced-filters-panel">
             <div className="filters-grid">
-              {/* Departure City */}
               <div className="filter-group">
-                <label className="filter-label">📍 Departure City</label>
+                <label className="filter-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  Departure City
+                </label>
                 <select
                   className="filter-select"
                   value={filters.departureCity}
@@ -452,29 +513,40 @@ const PackagesPage = () => {
                 </select>
               </div>
 
-              {/* Duration */}
               <div className="filter-group">
-                <label className="filter-label">⏱️ Duration</label>
+                <label className="filter-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Duration
+                </label>
                 <select
                   className="filter-select"
                   value={filters.duration}
                   onChange={(e) => handleFilterChange('duration', e.target.value)}
                 >
                   <option value="">Any Duration</option>
+                  <option value="5">5 Days</option>
                   <option value="7">7 Days</option>
                   <option value="10">10 Days</option>
                   <option value="12">12 Days</option>
                   <option value="14">14 Days</option>
                   <option value="15">15 Days</option>
+                  <option value="18">18 Days</option>
                   <option value="20">20 Days</option>
                   <option value="21">21 Days</option>
+                  <option value="25">25 Days</option>
                   <option value="30">30 Days</option>
                 </select>
               </div>
 
-              {/* Price Range */}
               <div className="filter-group">
-                <label className="filter-label">💰 Min Price</label>
+                <label className="filter-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Min Price
+                </label>
                 <input
                   type="number"
                   className="filter-input"
@@ -485,7 +557,12 @@ const PackagesPage = () => {
               </div>
 
               <div className="filter-group">
-                <label className="filter-label">💰 Max Price</label>
+                <label className="filter-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Max Price
+                </label>
                 <input
                   type="number"
                   className="filter-input"
@@ -498,52 +575,104 @@ const PackagesPage = () => {
           </div>
         )}
 
-        {/* Results */}
-        <div className="packages-content">
-          {/* Loading State */}
-          {isLoading && (
-            <div className="packages-loading">
-              <div className="spinner spinner-lg"></div>
-              <p>Loading packages...</p>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="alert alert-error">
-              Failed to load packages. Please try again later.
-            </div>
-          )}
-
-          {/* Packages Grid */}
-          {!isLoading && !error && packages.length > 0 && (
-            <>
-              <div className="packages-results-info">
-                <p>
-                  <strong>{packages.length}</strong> packages found
-                  {filters.search && ` for "${filters.search}"`}
-                </p>
-              </div>
-              <div className="packages-grid">
-                {packages.map((pkg) => (
-                  <PackageCard key={pkg.id} package={pkg} />
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* No Results */}
-          {!isLoading && !error && packages.length === 0 && (
-            <div className="no-results">
-              <div className="no-results-icon">🔍</div>
-              <h3>No packages found</h3>
-              <p>Try adjusting your filters or search criteria</p>
-              <button className="btn btn-primary" onClick={clearFilters}>
-                Clear Filters
-              </button>
-            </div>
-          )}
+        {/* Results Info */}
+        <div className="packages-results-info">
+          <p>
+            <strong>{packages.length}</strong> packages found
+            {filters.search && ` for "${filters.search}"`}
+          </p>
         </div>
+
+        {/* Packages Grid */}
+        {packages.length > 0 ? (
+          <div className="packages-grid">
+            {packages.map((pkg) => (
+              <Link to={`/packages/${pkg.id}`} key={pkg.id} className="package-card">
+                <div className="package-image-wrapper">
+                  <img src={pkg.image} alt={pkg.title} className="package-image" />
+                  {pkg.featured && <span className="featured-badge">Featured</span>}
+                  {pkg.seatsRemaining <= 10 && (
+                    <span className="seats-remaining-badge">
+                      Only {pkg.seatsRemaining} seats left!
+                    </span>
+                  )}
+                </div>
+
+                <div className="package-content">
+                  <div className="package-vendor">
+                    {pkg.vendor.verified && (
+                      <svg className="verified-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                    <span>{pkg.vendor.name}</span>
+                  </div>
+
+                  <h3 className="package-title">{pkg.title}</h3>
+
+                  <div className="package-rating">
+                    <span className="rating-stars">⭐ {pkg.rating}</span>
+                    <span className="rating-reviews">({pkg.reviews} reviews)</span>
+                  </div>
+
+                  <div className="package-details">
+                    <div className="detail-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>{pkg.duration} Days</span>
+                    </div>
+                    <div className="detail-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                      <span>{pkg.departureCity}</span>
+                    </div>
+                    <div className="detail-item">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      <span>{pkg.serviceClass}</span>
+                    </div>
+                  </div>
+
+                  <div className="package-inclusions">
+                    {pkg.inclusions.slice(0, 3).map((inc, idx) => (
+                      <span key={idx} className="inclusion-tag">{inc}</span>
+                    ))}
+                    {pkg.inclusions.length > 3 && (
+                      <span className="inclusion-tag">+{pkg.inclusions.length - 3} more</span>
+                    )}
+                  </div>
+
+                  <div className="package-footer">
+                    <div className="package-price">
+                      <span className="price-original">₹{pkg.price.toLocaleString()}</span>
+                      <span className="price-current">₹{pkg.discountedPrice.toLocaleString()}</span>
+                    </div>
+                    <button className="view-details-btn">
+                      View Details
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="no-results">
+            <svg className="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3>No packages found</h3>
+            <p>Try adjusting your filters or search criteria</p>
+            <button className="btn-clear-filters" onClick={clearFilters}>
+              Clear All Filters
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
