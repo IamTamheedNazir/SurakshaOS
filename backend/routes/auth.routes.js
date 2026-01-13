@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('../config/passport.config');
 const {
   register,
   login,
@@ -11,6 +12,10 @@ const {
   verifyEmail,
   resendVerification,
 } = require('../controllers/auth.controller');
+const {
+  googleCallback,
+  facebookCallback,
+} = require('../controllers/oauth.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 const { body, query } = require('express-validator');
 const { validate } = require('../middleware/validation.middleware');
@@ -19,6 +24,10 @@ const { validate } = require('../middleware/validation.middleware');
  * Auth Routes
  * Base path: /api/v1/auth
  */
+
+// ============================================
+// LOCAL AUTHENTICATION
+// ============================================
 
 /**
  * @route   POST /api/v1/auth/register
@@ -107,6 +116,10 @@ router.get('/verify', authenticate, verifyToken);
  */
 router.post('/logout', authenticate, logout);
 
+// ============================================
+// PASSWORD RECOVERY
+// ============================================
+
 /**
  * @route   POST /api/v1/auth/forgot-password
  * @desc    Send password reset email
@@ -166,6 +179,10 @@ router.post(
   resetPassword
 );
 
+// ============================================
+// EMAIL VERIFICATION
+// ============================================
+
 /**
  * @route   GET /api/v1/auth/verify-email
  * @desc    Verify email with token
@@ -200,6 +217,64 @@ router.post(
     validate,
   ],
   resendVerification
+);
+
+// ============================================
+// OAUTH AUTHENTICATION
+// ============================================
+
+/**
+ * @route   GET /api/v1/auth/google
+ * @desc    Initiate Google OAuth
+ * @access  Public
+ */
+router.get(
+  '/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+  })
+);
+
+/**
+ * @route   GET /api/v1/auth/google/callback
+ * @desc    Google OAuth callback
+ * @access  Public
+ */
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
+  }),
+  googleCallback
+);
+
+/**
+ * @route   GET /api/v1/auth/facebook
+ * @desc    Initiate Facebook OAuth
+ * @access  Public
+ */
+router.get(
+  '/facebook',
+  passport.authenticate('facebook', {
+    scope: ['email'],
+    session: false,
+  })
+);
+
+/**
+ * @route   GET /api/v1/auth/facebook/callback
+ * @desc    Facebook OAuth callback
+ * @access  Public
+ */
+router.get(
+  '/facebook/callback',
+  passport.authenticate('facebook', {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=facebook_auth_failed`,
+  }),
+  facebookCallback
 );
 
 module.exports = router;
