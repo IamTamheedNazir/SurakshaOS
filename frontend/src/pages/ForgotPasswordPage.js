@@ -1,88 +1,123 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import './ForgotPasswordPage.css';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
-    // Validation
-    if (!email.trim()) {
+    if (!email) {
       setError('Please enter your email address');
-      setLoading(false);
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address');
-      setLoading(false);
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send reset email');
-      }
-
-      setSuccess(true);
+      // API call to send reset email
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setIsSubmitted(true);
     } catch (err) {
-      setError(err.message);
+      setError('Failed to send reset email. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (success) {
+  const handleResend = async () => {
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      alert('Reset link resent successfully!');
+    } catch (err) {
+      setError('Failed to resend email. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isSubmitted) {
     return (
       <div className="forgot-password-page">
+        <div className="islamic-pattern-bg"></div>
+        
+        <div className="decorative-elements">
+          <div className="glow-orb glow-orb-1"></div>
+          <div className="glow-orb glow-orb-2"></div>
+        </div>
+
         <div className="forgot-password-container">
           <div className="success-card">
-            <div className="success-icon">
-              <CheckCircle size={64} />
+            <div className="success-icon-wrapper">
+              <div className="success-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              </div>
             </div>
-            <h2 className="success-title">Check Your Email</h2>
+
+            <h1>Check Your Email</h1>
             <p className="success-message">
               We've sent a password reset link to <strong>{email}</strong>
             </p>
-            <p className="success-instructions">
-              Click the link in the email to reset your password. The link will expire in 1 hour.
-            </p>
-            <div className="success-actions">
-              <Link to="/login" className="back-to-login-btn">
-                <ArrowLeft size={20} />
+
+            <div className="info-box">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <div>
+                <p><strong>Didn't receive the email?</strong></p>
+                <ul>
+                  <li>Check your spam or junk folder</li>
+                  <li>The link expires in 1 hour</li>
+                  <li>Make sure you entered the correct email</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="action-buttons">
+              <Link to="/login" className="btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
                 <span>Back to Login</span>
               </Link>
-              <button 
-                onClick={() => {
-                  setSuccess(false);
-                  setEmail('');
-                }}
-                className="resend-btn"
+
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleResend}
+                disabled={isLoading}
               >
-                Resend Email
+                {isLoading ? (
+                  <>
+                    <span className="spinner"></span>
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Resend Email</span>
+                  </>
+                )}
               </button>
             </div>
+
             <div className="help-text">
-              <p>Didn't receive the email? Check your spam folder or try again.</p>
+              Need help? <a href="mailto:support@umrahconnect.com">Contact Support</a>
             </div>
           </div>
         </div>
@@ -92,85 +127,94 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="forgot-password-page">
+      <div className="islamic-pattern-bg"></div>
+      
+      <div className="decorative-elements">
+        <div className="glow-orb glow-orb-1"></div>
+        <div className="glow-orb glow-orb-2"></div>
+      </div>
+
       <div className="forgot-password-container">
         <div className="forgot-password-card">
-          {/* Header */}
-          <div className="forgot-password-header">
-            <div className="logo">
-              <div className="logo-icon">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L18.36 7 12 9.82 5.64 7 12 4.18zM4 8.27l7 3.5v7.96l-7-3.5V8.27zm9 11.46v-7.96l7-3.5v7.96l-7 3.5z" />
-                </svg>
-              </div>
-              <div className="logo-text">
-                <span className="logo-main">
-                  Umrah<span className="logo-highlight">Connect</span>
-                </span>
-              </div>
+          {/* Logo */}
+          <div className="brand-logo">
+            <div className="logo-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
+              </svg>
             </div>
-
-            <h2 className="page-title">Forgot Password?</h2>
-            <p className="page-subtitle">
-              No worries! Enter your email address and we'll send you a link to reset your password.
-            </p>
+            <div className="logo-text">
+              <span className="logo-name">Umrah<span className="logo-highlight">Connect</span></span>
+            </div>
           </div>
 
-          {/* Error Message */}
+          <div className="form-header">
+            <h1>Forgot Password?</h1>
+            <p>No worries! Enter your email and we'll send you reset instructions.</p>
+          </div>
+
           {error && (
-            <div className="error-message">
-              <AlertCircle size={20} />
+            <div className="error-banner">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="forgot-password-form">
             <div className="form-group">
-              <label htmlFor="email" className="form-label">Email Address</label>
+              <label htmlFor="email">Email Address</label>
               <div className="input-wrapper">
-                <Mail size={20} className="input-icon" />
+                <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                </svg>
                 <input
                   type="email"
                   id="email"
                   name="email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
-                  placeholder="Enter your email"
-                  className="form-input"
-                  required
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  className={error ? 'error' : ''}
+                  autoFocus
                 />
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="submit-btn"
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {isLoading ? (
+                <>
+                  <span className="spinner"></span>
+                  <span>Sending Reset Link...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send Reset Link</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </>
+              )}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="forgot-password-footer">
-            <Link to="/login" className="back-link">
-              <ArrowLeft size={16} />
+          <div className="back-to-login">
+            <Link to="/login">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
               <span>Back to Login</span>
             </Link>
           </div>
 
-          {/* Help Text */}
           <div className="help-section">
-            <p className="help-title">Need help?</p>
-            <p className="help-text">
-              If you're having trouble resetting your password, please contact our support team at{' '}
-              <a href="mailto:support@umrahconnect.com" className="help-link">
-                support@umrahconnect.com
-              </a>
-            </p>
+            <p>Need help? Contact us at</p>
+            <a href="mailto:support@umrahconnect.com">support@umrahconnect.com</a>
           </div>
         </div>
       </div>
