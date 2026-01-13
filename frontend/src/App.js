@@ -16,6 +16,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfessionalHomePage from './pages/ProfessionalHomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import UserDashboard from './pages/UserDashboard';
 
 function App() {
   return (
@@ -44,9 +47,32 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/forgot-password" 
+              element={
+                <ProtectedRoute requireAuth={false}>
+                  <ForgotPasswordPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reset-password" 
+              element={
+                <ProtectedRoute requireAuth={false}>
+                  <ResetPasswordPage />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Protected Routes (require authentication) */}
-            {/* Dashboard and other protected routes will be added here */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <UserDashboard />
+                </ProtectedRoute>
+              } 
+            />
             
           </Routes>
         </main>
