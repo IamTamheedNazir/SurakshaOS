@@ -1,252 +1,385 @@
-# 🕌 UmrahConnect 2.0 - Complete Multi-Vendor Platform
+# 🕌 UmrahConnect 2.0
 
-A comprehensive, production-ready multi-vendor platform for Umrah and Hajj package bookings with advanced CMS capabilities.
+## Complete Umrah Booking Platform with PNR Inventory System
 
-## ✨ Features
+[![Laravel](https://img.shields.io/badge/Laravel-10.x-red.svg)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-### 🎯 Core Features
-- **Multi-Vendor System** - Vendors can create and manage their packages
-- **Dynamic CMS** - Fully customizable banners, themes, testimonials, and site settings
-- **Advanced Booking System** - Complete booking workflow with payment tracking
-- **Review & Rating System** - Customer reviews with auto-rating updates
-- **Role-Based Access** - Admin, Vendor, and Customer roles with specific permissions
-- **Responsive Design** - Mobile-first, fully responsive UI
+---
 
-### 🎨 CMS Features
-- **Banner Management** - Dynamic hero sliders with custom images and CTAs
-- **Theme System** - Multiple themes with live color customization
-- **Site Settings** - Centralized configuration for all site parameters
-- **Testimonials** - Featured customer testimonials with ratings
-- **SEO Optimization** - Meta tags, descriptions, and keywords management
+## 📋 OVERVIEW
 
-### 💳 Booking & Payment
-- **Multi-Step Booking** - Intuitive booking flow with traveler details
-- **Payment Integration** - Razorpay, Stripe, and PayPal support
-- **Partial Payments** - Support for advance and installment payments
-- **Invoice Generation** - Automatic PDF invoice generation
-- **Cancellation Management** - Flexible cancellation with refund calculation
+UmrahConnect 2.0 is a complete travel booking platform built with Laravel backend and React frontend. It includes a comprehensive Umrah package booking system plus an advanced PNR (Passenger Name Record) inventory management system for flight seat selling.
 
-### 👥 User Management
-- **Vendor Approval System** - Admin approval workflow for vendors
-- **Package Approval** - Admin moderation for package listings
-- **User Verification** - Email and phone verification
-- **Profile Management** - Complete profile with documents upload
+### **Key Features:**
+- ✅ Complete Umrah package booking system
+- ✅ Advanced PNR inventory management
+- ✅ Multi-role system (Admin/Vendor/Customer)
+- ✅ Payment gateway integration (Razorpay/Stripe/PayPal)
+- ✅ Review and rating system
+- ✅ Automated voucher generation
+- ✅ Email & WhatsApp notifications
+- ✅ CRM & HRM integration
+- ✅ Real-time profit/loss tracking
 
-### 📊 Analytics & Reports
-- **Dashboard Statistics** - Real-time analytics for admin and vendors
-- **Revenue Reports** - Detailed financial reports
-- **Booking Analytics** - Booking trends and insights
-- **Vendor Performance** - Track vendor ratings and bookings
+---
 
-## 🚀 Tech Stack
-
-### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB** - Database with Mongoose ODM
-- **JWT** - Authentication
-- **Bcrypt** - Password hashing
-- **Multer** - File uploads
-- **Cloudinary** - Image storage
-- **Nodemailer** - Email service
-- **PDFKit** - PDF generation
-
-### Frontend
-- **React.js** - UI library
-- **React Router** - Navigation
-- **Axios** - HTTP client
-- **Context API** - State management
-- **CSS3** - Styling with custom properties
-
-## 📁 Project Structure
+## 🏗️ PROJECT STRUCTURE
 
 ```
 umrahconnect-2.0/
-├── backend/
-│   ├── config/
-│   │   └── db.js                 # Database connection
-│   ├── models/
-│   │   ├── User.js               # User model with vendor info
-│   │   ├── Package.js            # Package model with CMS features
-│   │   ├── Booking.js            # Booking with payment tracking
-│   │   ├── Review.js             # Review and rating system
-│   │   ├── Banner.js             # CMS banner model
-│   │   ├── Theme.js              # CMS theme model
-│   │   ├── SiteSettings.js       # Site configuration
-│   │   └── Testimonial.js        # Customer testimonials
-│   ├── controllers/              # Business logic
-│   ├── routes/                   # API routes
-│   ├── middleware/               # Custom middleware
-│   ├── utils/                    # Helper functions
-│   ├── scripts/
-│   │   └── seed.js               # Database seeding
-│   ├── .env.example              # Environment variables template
-│   ├── server.js                 # Server entry point
-│   └── package.json
+├── backend/                    # Laravel 10 Backend API
+│   ├── app/                   # Application code
+│   │   ├── Models/           # 10 Eloquent models
+│   │   └── Http/Controllers/ # 10 API controllers
+│   ├── database/             # Migrations & seeders
+│   ├── routes/               # API routes
+│   ├── config/               # Configuration
+│   └── public/               # Public assets
 │
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   ├── banner/
-    │   │   │   ├── BannerSlider.jsx
-    │   │   │   └── BannerSlider.css
-    │   │   └── testimonials/
-    │   │       ├── Testimonials.jsx
-    │   │       └── Testimonials.css
-    │   ├── contexts/
-    │   │   ├── ThemeContext.jsx   # Theme management
-    │   │   └── SettingsContext.jsx # Settings management
-    │   ├── pages/
-    │   │   └── HomePage.jsx        # Dynamic homepage
-    │   ├── services/
-    │   │   └── api.js              # API service layer
-    │   └── App.js
-    └── package.json
+├── frontend/                   # React Frontend
+│   ├── src/                  # Source code
+│   ├── public/               # Static assets
+│   └── dist/                 # Production build
+│
+├── database/                   # Database files
+├── install/                    # Installation system
+├── docs/                       # Documentation
+└── README.md                   # This file
 ```
 
-## 🛠️ Installation & Setup
+---
 
-### Prerequisites
-- Node.js (v16 or higher)
-- MongoDB (v5 or higher)
+## 🚀 QUICK START
+
+### **Prerequisites:**
+- PHP 8.1+
+- Composer
+- MySQL 5.7+
+- Node.js 16+
 - npm or yarn
 
-### Backend Setup
+### **Installation:**
 
-1. **Clone the repository**
+#### **1. Clone Repository**
 ```bash
 git clone https://github.com/IamTamheedNazir/umrahconnect-2.0.git
-cd umrahconnect-2.0/backend
+cd umrahconnect-2.0
 ```
 
-2. **Install dependencies**
+#### **2. Backend Setup**
 ```bash
-npm install
-```
-
-3. **Configure environment variables**
-```bash
+cd backend
+composer install
 cp .env.example .env
+# Edit .env with your database credentials
+php artisan key:generate
+php artisan jwt:secret
+php artisan migrate --seed
+php artisan serve
 ```
 
-Edit `.env` file with your configuration:
-```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/umrahconnect
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRE=30d
-
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-
-# Payment Gateways
-RAZORPAY_KEY_ID=your_razorpay_key
-RAZORPAY_KEY_SECRET=your_razorpay_secret
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
-
-4. **Seed the database** (Optional - for testing)
+#### **3. Frontend Setup**
 ```bash
-npm run seed
-```
-
-This will create:
-- 1 Admin user
-- 2 Vendor users
-- 2 Customer users
-- 4 Sample packages
-- 3 Banners
-- 2 Themes
-- 6 Testimonials
-- Site settings
-
-**Default Login Credentials:**
-- Admin: `admin@umrahconnect.com` / `password123`
-- Vendor 1: `vendor1@umrahconnect.com` / `password123`
-- Vendor 2: `vendor2@umrahconnect.com` / `password123`
-
-5. **Start the server**
-```bash
-# Development mode
-npm run dev
-
-# Production mode
-npm start
-```
-
-Server will run on `http://localhost:5000`
-
-### Frontend Setup
-
-1. **Navigate to frontend directory**
-```bash
-cd ../frontend
-```
-
-2. **Install dependencies**
-```bash
+cd frontend
 npm install
+cp .env.example .env
+# Edit .env with your backend API URL
+npm run dev
 ```
 
-3. **Configure environment**
-```bash
-# Create .env file
-echo "REACT_APP_API_URL=http://localhost:5000/api" > .env
+#### **4. Access Application**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000/api
+
+---
+
+## 📦 FEATURES
+
+### **1. Umrah Booking System**
+- Package management (CRUD)
+- Advanced search & filters
+- Booking management
+- Payment processing
+- Review & ratings
+- Multi-role dashboards
+
+### **2. PNR Inventory System**
+- Flight inventory management
+- Seat selling with profit tracking
+- Auto voucher generation (PDF)
+- Email & WhatsApp distribution
+- TTL (Time To Live) alerts
+- Expiry management
+- Loss prevention
+
+### **3. User Management**
+- Role-based access control
+- Customer portal
+- Vendor dashboard
+- Admin panel
+- Profile management
+
+### **4. Payment Integration**
+- Razorpay
+- Stripe
+- PayPal
+- Invoice generation
+- Transaction history
+
+### **5. Notifications**
+- Email notifications
+- WhatsApp integration
+- In-app notifications
+- Booking confirmations
+
+---
+
+## 🔌 API ENDPOINTS
+
+### **Authentication**
+```
+POST   /api/auth/register      - Register new user
+POST   /api/auth/login         - Login user
+POST   /api/auth/logout        - Logout user
+GET    /api/auth/me            - Get current user
 ```
 
-4. **Start the development server**
-```bash
-npm start
+### **Packages**
+```
+GET    /api/packages           - List all packages
+GET    /api/packages/{id}      - Get package details
+POST   /api/packages           - Create package (vendor)
+PUT    /api/packages/{id}      - Update package (vendor)
+DELETE /api/packages/{id}      - Delete package (vendor)
 ```
 
-Frontend will run on `http://localhost:3000`
-
-## 📚 API Documentation
-
-### Authentication Endpoints
+### **Bookings**
 ```
-POST   /api/auth/register          # Register new user
-POST   /api/auth/login             # Login user
-GET    /api/auth/me                # Get current user
-POST   /api/auth/logout            # Logout user
-POST   /api/auth/forgot-password   # Request password reset
-POST   /api/auth/reset-password    # Reset password
+GET    /api/bookings           - List bookings
+POST   /api/bookings           - Create booking
+GET    /api/bookings/{id}      - Get booking details
+PATCH  /api/bookings/{id}/status - Update status
 ```
 
-### CMS Endpoints
+### **PNR Inventory**
 ```
-# Banners
-GET    /api/banners/active         # Get active banners (public)
-GET    /api/banners                # Get all banners (admin)
-POST   /api/banners                # Create banner (admin)
-PUT    /api/banners/:id            # Update banner (admin)
-DELETE /api/banners/:id            # Delete banner (admin)
-
-# Themes
-GET    /api/themes/active          # Get active theme (public)
-GET    /api/themes                 # Get all themes (admin)
-POST   /api/themes                 # Create theme (admin)
-PUT    /api/themes/:id/activate    # Activate theme (admin)
-
-# Settings
-GET    /api/settings/public        # Get public settings
-GET    /api/settings               # Get all settings (admin)
-PUT    /api/settings               # Update settings (admin)
-
-# Testimonials
-GET    /api/testimonials/featured  # Get featured testimonials
-GET    /api/testimonials           # Get all testimonials
-POST   /api/testimonials           # Create testimonial (admin)
+GET    /api/pnr-inventory/dashboard - Dashboard stats
+GET    /api/pnr-inventory      - List inventory
+POST   /api/pnr-inventory      - Add PNR
+POST   /api/pnr-sales          - Sell seats
+GET    /api/pnr-sales/{id}/download-voucher - Download voucher
 ```
 
-## 🔧 Build Status
-All CSS image references have been replaced with CSS patterns for optimal performance.
+**Full API Documentation:** See `docs/API_DOCUMENTATION.md`
+
+---
+
+## 🗄️ DATABASE
+
+### **Tables (10):**
+1. users - User accounts
+2. packages - Umrah packages
+3. bookings - Booking records
+4. reviews - Package reviews
+5. payments - Payment transactions
+6. vendor_profiles - Vendor details
+7. settings - Application settings
+8. customers - Customer CRM
+9. pnr_inventory - Flight inventory
+10. pnr_sales - Seat sales
+
+**Schema Details:** See `docs/DATABASE_SCHEMA.md`
+
+---
+
+## 🚀 DEPLOYMENT
+
+### **cPanel Deployment:**
+
+#### **Backend:**
+1. Upload `backend` folder to `public_html/backend`
+2. Create MySQL database
+3. Configure `.env` file
+4. Run: `composer install --no-dev`
+5. Run: `php artisan migrate --force`
+6. Run: `php artisan db:seed`
+
+#### **Frontend:**
+1. Build: `npm run build`
+2. Upload `dist` folder contents to `public_html`
+3. Configure `.htaccess` for routing
+
+**Detailed Guide:** See `docs/DEPLOYMENT.md`
+
+---
+
+## 🧪 TESTING
+
+### **Test Accounts:**
+```
+Admin:
+Email: admin@umrahconnect.in
+Password: admin123
+
+Vendor:
+Email: vendor@umrahconnect.in
+Password: vendor123
+
+Customer:
+Email: customer@umrahconnect.in
+Password: customer123
+```
+
+**⚠️ Change passwords after first login!**
+
+---
+
+## 📚 DOCUMENTATION
+
+- **Installation:** `docs/INSTALLATION.md`
+- **Deployment:** `docs/DEPLOYMENT.md`
+- **API Documentation:** `docs/API_DOCUMENTATION.md`
+- **PNR Inventory:** `docs/PNR_INVENTORY.md`
+- **Database Schema:** `docs/DATABASE_SCHEMA.md`
+- **Quick Test:** `docs/QUICK_TEST.md`
+
+---
+
+## 🛠️ TECH STACK
+
+### **Backend:**
+- Laravel 10
+- PHP 8.1+
+- MySQL
+- JWT Authentication
+- RESTful API
+
+### **Frontend:**
+- React 18
+- Vite
+- React Router
+- Axios
+- Tailwind CSS
+
+### **Additional:**
+- Composer
+- npm/yarn
+- Git
+
+---
+
+## 📊 STATISTICS
+
+- **Backend:** 10 Models, 10 Controllers, 10 Migrations
+- **API Endpoints:** 65+
+- **Frontend Pages:** 20+
+- **Total Files:** 40+
+- **Lines of Code:** ~7,500+
+
+---
+
+## 🤝 CONTRIBUTING
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+---
+
+## 📝 LICENSE
+
+This project is licensed under the MIT License.
+
+---
+
+## 👥 TEAM
+
+**Developer:** Tamheed Nazir  
+**GitHub:** [@IamTamheedNazir](https://github.com/IamTamheedNazir)
+
+---
+
+## 📞 SUPPORT
+
+For issues, questions, or support:
+- **GitHub Issues:** [Create an issue](https://github.com/IamTamheedNazir/umrahconnect-2.0/issues)
+- **Email:** tnsolution1s@gmail.com
+
+---
+
+## 🎯 ROADMAP
+
+### **Completed:**
+- ✅ Complete Umrah booking system
+- ✅ PNR inventory management
+- ✅ Payment gateway integration
+- ✅ Multi-role system
+- ✅ Voucher generation
+- ✅ Email/WhatsApp notifications
+
+### **Planned:**
+- ⏳ Mobile app (React Native)
+- ⏳ Advanced analytics
+- ⏳ Multi-language support
+- ⏳ SMS notifications
+- ⏳ Advanced reporting
+
+---
+
+## 🌟 FEATURES HIGHLIGHT
+
+### **PNR Inventory System:**
+The standout feature of UmrahConnect 2.0 is the advanced PNR Inventory Management System that allows travel agents to:
+
+- Purchase flight PNR blocks in bulk
+- Track inventory with TTL (Time To Live)
+- Sell seats to customers
+- Auto-generate professional vouchers
+- Send vouchers via Email & WhatsApp
+- Track profit/loss automatically
+- Get expiry alerts
+- Integrate with CRM & Accounting
+
+**This replaces manual Google Sheets tracking with a fully automated system!**
+
+---
+
+## 🎉 ACKNOWLEDGMENTS
+
+Built with ❤️ for the travel industry.
+
+Special thanks to:
+- Laravel community
+- React community
+- All contributors
+
+---
+
+## 📈 VERSION
+
+**Current Version:** 2.0.0  
+**Release Date:** January 2024  
+**Status:** Production Ready
+
+---
+
+**🚀 Ready to revolutionize your travel business!** 🚀
+
+---
+
+## 🔗 LINKS
+
+- **Live Demo:** https://umrahconnect.in
+- **Documentation:** [docs/](docs/)
+- **API Docs:** [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
+- **GitHub:** https://github.com/IamTamheedNazir/umrahconnect-2.0
+
+---
+
+**Made with ❤️ for UmrahConnect**
