@@ -10,6 +10,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PNRInventoryController;
+use App\Http\Controllers\PNRSaleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -99,6 +101,35 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/create', [PaymentController::class, 'create']);
         Route::post('/verify', [PaymentController::class, 'verify']);
         Route::get('/history', [PaymentController::class, 'history']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | PNR Inventory Routes (NEW)
+    |--------------------------------------------------------------------------
+    */
+    
+    // PNR Inventory Management
+    Route::prefix('pnr-inventory')->group(function () {
+        Route::get('/dashboard', [PNRInventoryController::class, 'dashboard']);
+        Route::get('/', [PNRInventoryController::class, 'index']);
+        Route::post('/', [PNRInventoryController::class, 'store']);
+        Route::get('/{id}', [PNRInventoryController::class, 'show']);
+        Route::put('/{id}', [PNRInventoryController::class, 'update']);
+        Route::delete('/{id}', [PNRInventoryController::class, 'destroy']);
+        Route::get('/warnings/expiry', [PNRInventoryController::class, 'expiryWarnings']);
+        Route::post('/check-expired', [PNRInventoryController::class, 'checkExpired']);
+    });
+    
+    // PNR Sales Management
+    Route::prefix('pnr-sales')->group(function () {
+        Route::get('/', [PNRSaleController::class, 'index']);
+        Route::post('/', [PNRSaleController::class, 'store']);
+        Route::get('/{id}', [PNRSaleController::class, 'show']);
+        Route::post('/{id}/payment', [PNRSaleController::class, 'updatePayment']);
+        Route::get('/{id}/download-voucher', [PNRSaleController::class, 'downloadVoucher'])->name('pnr-sales.download-voucher');
+        Route::post('/{id}/resend-email', [PNRSaleController::class, 'resendEmail']);
+        Route::post('/{id}/resend-whatsapp', [PNRSaleController::class, 'resendWhatsApp']);
     });
 
     /*
