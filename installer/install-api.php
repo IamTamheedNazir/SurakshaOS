@@ -45,6 +45,24 @@ switch ($action) {
 }
 
 /**
+ * Get backend path - supports both 'backend' and 'backend-laravel' folder names
+ */
+function getBackendPath() {
+    $possiblePaths = [
+        dirname(__DIR__) . '/backend',
+        dirname(__DIR__) . '/backend-laravel'
+    ];
+    
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+    
+    return dirname(__DIR__) . '/backend'; // Default
+}
+
+/**
  * Check system requirements
  */
 function checkRequirements() {
@@ -69,21 +87,41 @@ function checkRequirements() {
     }
     
     // Directory Permissions
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     $storagePath = $backendPath . '/storage';
     $bootstrapCachePath = $backendPath . '/bootstrap/cache';
     
-    $checks[] = [
-        'name' => 'Storage Directory Writable',
-        'passed' => is_writable($storagePath) || @chmod($storagePath, 0755),
-        'message' => is_writable($storagePath) ? 'Writable' : 'Not writable'
-    ];
+    // Check if storage directory exists and is writable
+    if (file_exists($storagePath)) {
+        $isWritable = is_writable($storagePath);
+        $checks[] = [
+            'name' => 'Storage Directory Writable',
+            'passed' => $isWritable,
+            'message' => $isWritable ? 'Writable' : 'Not writable (chmod 775 or 777 required)'
+        ];
+    } else {
+        $checks[] = [
+            'name' => 'Storage Directory Writable',
+            'passed' => false,
+            'message' => 'Directory not found: ' . $storagePath
+        ];
+    }
     
-    $checks[] = [
-        'name' => 'Bootstrap Cache Writable',
-        'passed' => is_writable($bootstrapCachePath) || @chmod($bootstrapCachePath, 0755),
-        'message' => is_writable($bootstrapCachePath) ? 'Writable' : 'Not writable'
-    ];
+    // Check if bootstrap cache exists and is writable
+    if (file_exists($bootstrapCachePath)) {
+        $isWritable = is_writable($bootstrapCachePath);
+        $checks[] = [
+            'name' => 'Bootstrap Cache Writable',
+            'passed' => $isWritable,
+            'message' => $isWritable ? 'Writable' : 'Not writable (chmod 775 or 777 required)'
+        ];
+    } else {
+        $checks[] = [
+            'name' => 'Bootstrap Cache Writable',
+            'passed' => false,
+            'message' => 'Directory not found: ' . $bootstrapCachePath
+        ];
+    }
     
     // Composer vendor directory
     $vendorPath = $backendPath . '/vendor';
@@ -128,7 +166,7 @@ function testDatabase() {
 function createEnvFile() {
     $data = json_decode(file_get_contents('php://input'), true);
     
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     $envExamplePath = $backendPath . '/.env.example';
     $envPath = $backendPath . '/.env';
     
@@ -165,7 +203,7 @@ function createEnvFile() {
  * Generate application key
  */
 function generateAppKey() {
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     
     // Generate random key
     $key = 'base64:' . base64_encode(random_bytes(32));
@@ -192,7 +230,7 @@ function generateAppKey() {
  * Run database migrations
  */
 function runMigrations() {
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     
     // Change to backend directory
     chdir($backendPath);
@@ -213,7 +251,7 @@ function runMigrations() {
  * Seed database
  */
 function seedDatabase() {
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     
     // Change to backend directory
     chdir($backendPath);
@@ -237,7 +275,7 @@ function createAdminAccount() {
     $data = json_decode(file_get_contents('php://input'), true);
     $admin = $data['admin'];
     
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     $envPath = $backendPath . '/.env';
     
     // Load environment
@@ -295,20 +333,24 @@ function createAdminAccount() {
  * Set proper permissions
  */
 function setPermissions() {
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     
     // Set permissions for storage and cache
-    @chmod($backendPath . '/storage', 0755);
-    @chmod($backendPath . '/bootstrap/cache', 0755);
+    @chmod($backendPath . '/storage', 0775);
+    @chmod($backendPath . '/bootstrap/cache', 0775);
     
-    // Recursively set permissions
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($backendPath . '/storage'),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
-    
-    foreach ($iterator as $item) {
-        @chmod($item, 0755);
+    // Recursively set permissions for storage
+    try {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($backendPath . '/storage', RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        foreach ($iterator as $item) {
+            @chmod($item->getPathname(), $item->isDir() ? 0775 : 0664);
+        }
+    } catch (Exception $e) {
+        // Continue even if recursive chmod fails
     }
     
     jsonResponse(true, 'Permissions set successfully');
@@ -318,7 +360,7 @@ function setPermissions() {
  * Finalize installation
  */
 function finalizeInstallation() {
-    $backendPath = dirname(__DIR__) . '/backend-laravel';
+    $backendPath = getBackendPath();
     
     // Clear caches
     chdir($backendPath);
