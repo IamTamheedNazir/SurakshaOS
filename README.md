@@ -1,385 +1,346 @@
 # 🕌 UmrahConnect 2.0
 
-## Complete Umrah Booking Platform with PNR Inventory System
+**Complete Umrah Booking & Management Platform**
 
-[![Laravel](https://img.shields.io/badge/Laravel-10.x-red.svg)](https://laravel.com)
-[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+A modern, full-featured platform for managing Umrah bookings, packages, customers, and operations.
 
 ---
 
-## 📋 OVERVIEW
+## ✨ **FEATURES**
 
-UmrahConnect 2.0 is a complete travel booking platform built with Laravel backend and React frontend. It includes a comprehensive Umrah package booking system plus an advanced PNR (Passenger Name Record) inventory management system for flight seat selling.
-
-### **Key Features:**
-- ✅ Complete Umrah package booking system
-- ✅ Advanced PNR inventory management
-- ✅ Multi-role system (Admin/Vendor/Customer)
-- ✅ Payment gateway integration (Razorpay/Stripe/PayPal)
-- ✅ Review and rating system
-- ✅ Automated voucher generation
-- ✅ Email & WhatsApp notifications
-- ✅ CRM & HRM integration
-- ✅ Real-time profit/loss tracking
+- 🎫 **Package Management** - Create and manage Umrah packages
+- 👥 **Customer Management** - Track customers and bookings
+- 💳 **Payment Integration** - Razorpay, Stripe, PayPal
+- 📧 **Email Notifications** - Automated booking confirmations
+- 📱 **Responsive Design** - Works on all devices
+- 🔐 **Secure Authentication** - JWT-based auth system
+- 📊 **Admin Dashboard** - Complete control panel
+- 🌍 **Multi-language Support** - English, Arabic, Urdu
+- 📈 **Analytics & Reports** - Track bookings and revenue
 
 ---
 
-## 🏗️ PROJECT STRUCTURE
+## 🚀 **QUICK START**
+
+### **1. Download & Prepare**
+
+```bash
+# Clone repository
+git clone https://github.com/IamTamheedNazir/umrahconnect-2.0.git
+cd umrahconnect-2.0
+
+# Run automated setup
+chmod +x setup.sh
+./setup.sh
+
+# Install dependencies
+cd backend
+composer install --no-dev --optimize-autoloader
+```
+
+### **2. Upload to cPanel**
+
+1. Zip the entire folder
+2. Upload to `public_html/`
+3. Extract files
+4. Set permissions (775 for storage and cache)
+
+### **3. Run Installer**
+
+Visit: `https://yourdomain.com/install/`
+
+Follow the 5-step wizard to complete installation.
+
+---
+
+## 📁 **IMPORTANT: FOLDER RENAMING**
+
+After downloading, rename these folders:
+
+```bash
+backend-laravel  →  backend
+installer        →  install
+```
+
+**Automated rename:**
+```bash
+./setup.sh  # Linux/Mac
+setup.bat   # Windows
+```
+
+**Manual rename:**
+```bash
+mv backend-laravel backend
+mv installer install
+```
+
+See [RENAME_FOLDERS_GUIDE.md](RENAME_FOLDERS_GUIDE.md) for details.
+
+---
+
+## 📚 **DOCUMENTATION**
+
+### **Installation Guides**
+
+- 📖 [**COMPLETE_SETUP_GUIDE.md**](COMPLETE_SETUP_GUIDE.md) - **START HERE!** Complete step-by-step guide
+- 📖 [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) - Quick installation guide
+- 📖 [RENAME_FOLDERS_GUIDE.md](RENAME_FOLDERS_GUIDE.md) - Folder renaming instructions
+
+### **Deployment**
+
+- 🚀 [CPANEL_DEPLOYMENT_GUIDE.md](CPANEL_DEPLOYMENT_GUIDE.md) - cPanel deployment
+- 🚀 [SHARED_HOSTING_SETUP.md](SHARED_HOSTING_SETUP.md) - Shared hosting setup
+
+### **Technical Documentation**
+
+- 🔧 [LARAVEL_BACKEND_COMPLETE.md](LARAVEL_BACKEND_COMPLETE.md) - Backend documentation
+- 🗄️ [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - Database structure
+- 📡 [BACKEND_API_DOCUMENTATION.md](BACKEND_API_DOCUMENTATION.md) - API endpoints
+
+---
+
+## 🔧 **REQUIREMENTS**
+
+### **Server Requirements**
+
+- PHP 8.1 or higher
+- MySQL 5.7 or higher
+- Composer
+- Apache/Nginx web server
+
+### **PHP Extensions**
+
+- PDO, PDO MySQL
+- MBString, OpenSSL
+- Tokenizer, XML
+- CType, JSON, BCMath
+
+---
+
+## 📦 **PROJECT STRUCTURE**
 
 ```
 umrahconnect-2.0/
-├── backend/                    # Laravel 10 Backend API
-│   ├── app/                   # Application code
-│   │   ├── Models/           # 10 Eloquent models
-│   │   └── Http/Controllers/ # 10 API controllers
-│   ├── database/             # Migrations & seeders
-│   ├── routes/               # API routes
-│   ├── config/               # Configuration
-│   └── public/               # Public assets
-│
-├── frontend/                   # React Frontend
-│   ├── src/                  # Source code
-│   ├── public/               # Static assets
-│   └── dist/                 # Production build
-│
-├── database/                   # Database files
-├── install/                    # Installation system
-├── docs/                       # Documentation
-└── README.md                   # This file
+├── backend/              ← Laravel backend (rename from backend-laravel)
+│   ├── app/
+│   ├── config/
+│   ├── database/
+│   ├── routes/
+│   └── ...
+├── frontend/             ← React frontend
+│   ├── src/
+│   ├── public/
+│   └── ...
+├── install/              ← Installation wizard (rename from installer)
+│   ├── index.php
+│   ├── install-api.php
+│   └── ...
+├── database/             ← Database files
+│   └── schema.sql
+├── setup.sh              ← Automated setup script (Linux/Mac)
+├── setup.bat             ← Automated setup script (Windows)
+└── README.md             ← This file
 ```
 
 ---
 
-## 🚀 QUICK START
+## 🎯 **INSTALLATION STEPS**
 
-### **Prerequisites:**
-- PHP 8.1+
-- Composer
-- MySQL 5.7+
-- Node.js 16+
-- npm or yarn
+### **Step 1: Prepare Files**
 
-### **Installation:**
-
-#### **1. Clone Repository**
 ```bash
+# Download
 git clone https://github.com/IamTamheedNazir/umrahconnect-2.0.git
 cd umrahconnect-2.0
+
+# Rename folders
+./setup.sh  # or setup.bat on Windows
+
+# Install Composer dependencies
+cd backend
+composer install --no-dev --optimize-autoloader
 ```
 
-#### **2. Backend Setup**
+### **Step 2: Upload to Server**
+
+1. Zip the entire folder
+2. Upload to cPanel → `public_html/`
+3. Extract files
+4. Ensure folder structure:
+   ```
+   public_html/
+   ├── backend/
+   ├── frontend/
+   ├── install/
+   └── database/
+   ```
+
+### **Step 3: Set Permissions**
+
+```bash
+chmod -R 775 backend/storage
+chmod -R 775 backend/bootstrap/cache
+```
+
+Or via cPanel File Manager:
+- Right-click folder → Change Permissions → 775
+- Check "Recurse into subdirectories"
+
+### **Step 4: Create Database**
+
+In cPanel → MySQL Databases:
+1. Create database: `umrahconnect_db`
+2. Create user: `umrahconnect_user`
+3. Add user to database with ALL PRIVILEGES
+
+### **Step 5: Run Installer**
+
+Visit: `https://yourdomain.com/install/`
+
+The installer will:
+- ✅ Check requirements
+- ✅ Configure database
+- ✅ Set up application
+- ✅ Create admin account
+- ✅ Complete installation
+
+### **Step 6: Delete Installer**
+
+**IMPORTANT:** After installation, delete the install folder:
+
+```bash
+rm -rf install/
+```
+
+Or via cPanel File Manager: Delete `install/` folder
+
+---
+
+## 🔍 **TROUBLESHOOTING**
+
+### **Issue: Composer Dependencies Missing**
+
+**Fix:**
 ```bash
 cd backend
-composer install
-cp .env.example .env
-# Edit .env with your database credentials
-php artisan key:generate
-php artisan jwt:secret
-php artisan migrate --seed
-php artisan serve
+composer install --no-dev --optimize-autoloader
 ```
 
-#### **3. Frontend Setup**
+Or upload `vendor/` folder manually.
+
+### **Issue: Storage Not Writable**
+
+**Fix:**
 ```bash
-cd frontend
-npm install
-cp .env.example .env
-# Edit .env with your backend API URL
-npm run dev
+chmod -R 775 backend/storage
+chmod -R 775 backend/bootstrap/cache
 ```
 
-#### **4. Access Application**
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000/api
+### **Issue: 500 Error**
+
+**Check:**
+1. `.env` file exists
+2. `APP_KEY` is generated
+3. Database credentials are correct
+4. Check logs: `backend/storage/logs/laravel.log`
+
+### **Diagnostic Tool**
+
+Visit: `https://yourdomain.com/install/check.php`
+
+This will show you exactly what's wrong and how to fix it.
 
 ---
 
-## 📦 FEATURES
+## 🎨 **TECH STACK**
 
-### **1. Umrah Booking System**
-- Package management (CRUD)
-- Advanced search & filters
-- Booking management
-- Payment processing
-- Review & ratings
-- Multi-role dashboards
-
-### **2. PNR Inventory System**
-- Flight inventory management
-- Seat selling with profit tracking
-- Auto voucher generation (PDF)
-- Email & WhatsApp distribution
-- TTL (Time To Live) alerts
-- Expiry management
-- Loss prevention
-
-### **3. User Management**
-- Role-based access control
-- Customer portal
-- Vendor dashboard
-- Admin panel
-- Profile management
-
-### **4. Payment Integration**
-- Razorpay
-- Stripe
-- PayPal
-- Invoice generation
-- Transaction history
-
-### **5. Notifications**
-- Email notifications
-- WhatsApp integration
-- In-app notifications
-- Booking confirmations
-
----
-
-## 🔌 API ENDPOINTS
-
-### **Authentication**
-```
-POST   /api/auth/register      - Register new user
-POST   /api/auth/login         - Login user
-POST   /api/auth/logout        - Logout user
-GET    /api/auth/me            - Get current user
-```
-
-### **Packages**
-```
-GET    /api/packages           - List all packages
-GET    /api/packages/{id}      - Get package details
-POST   /api/packages           - Create package (vendor)
-PUT    /api/packages/{id}      - Update package (vendor)
-DELETE /api/packages/{id}      - Delete package (vendor)
-```
-
-### **Bookings**
-```
-GET    /api/bookings           - List bookings
-POST   /api/bookings           - Create booking
-GET    /api/bookings/{id}      - Get booking details
-PATCH  /api/bookings/{id}/status - Update status
-```
-
-### **PNR Inventory**
-```
-GET    /api/pnr-inventory/dashboard - Dashboard stats
-GET    /api/pnr-inventory      - List inventory
-POST   /api/pnr-inventory      - Add PNR
-POST   /api/pnr-sales          - Sell seats
-GET    /api/pnr-sales/{id}/download-voucher - Download voucher
-```
-
-**Full API Documentation:** See `docs/API_DOCUMENTATION.md`
-
----
-
-## 🗄️ DATABASE
-
-### **Tables (10):**
-1. users - User accounts
-2. packages - Umrah packages
-3. bookings - Booking records
-4. reviews - Package reviews
-5. payments - Payment transactions
-6. vendor_profiles - Vendor details
-7. settings - Application settings
-8. customers - Customer CRM
-9. pnr_inventory - Flight inventory
-10. pnr_sales - Seat sales
-
-**Schema Details:** See `docs/DATABASE_SCHEMA.md`
-
----
-
-## 🚀 DEPLOYMENT
-
-### **cPanel Deployment:**
-
-#### **Backend:**
-1. Upload `backend` folder to `public_html/backend`
-2. Create MySQL database
-3. Configure `.env` file
-4. Run: `composer install --no-dev`
-5. Run: `php artisan migrate --force`
-6. Run: `php artisan db:seed`
-
-#### **Frontend:**
-1. Build: `npm run build`
-2. Upload `dist` folder contents to `public_html`
-3. Configure `.htaccess` for routing
-
-**Detailed Guide:** See `docs/DEPLOYMENT.md`
-
----
-
-## 🧪 TESTING
-
-### **Test Accounts:**
-```
-Admin:
-Email: admin@umrahconnect.in
-Password: admin123
-
-Vendor:
-Email: vendor@umrahconnect.in
-Password: vendor123
-
-Customer:
-Email: customer@umrahconnect.in
-Password: customer123
-```
-
-**⚠️ Change passwords after first login!**
-
----
-
-## 📚 DOCUMENTATION
-
-- **Installation:** `docs/INSTALLATION.md`
-- **Deployment:** `docs/DEPLOYMENT.md`
-- **API Documentation:** `docs/API_DOCUMENTATION.md`
-- **PNR Inventory:** `docs/PNR_INVENTORY.md`
-- **Database Schema:** `docs/DATABASE_SCHEMA.md`
-- **Quick Test:** `docs/QUICK_TEST.md`
-
----
-
-## 🛠️ TECH STACK
-
-### **Backend:**
-- Laravel 10
+### **Backend**
+- Laravel 10.x
 - PHP 8.1+
 - MySQL
 - JWT Authentication
-- RESTful API
 
-### **Frontend:**
+### **Frontend**
 - React 18
-- Vite
-- React Router
-- Axios
 - Tailwind CSS
+- Axios
+- React Router
 
-### **Additional:**
-- Composer
-- npm/yarn
-- Git
-
----
-
-## 📊 STATISTICS
-
-- **Backend:** 10 Models, 10 Controllers, 10 Migrations
-- **API Endpoints:** 65+
-- **Frontend Pages:** 20+
-- **Total Files:** 40+
-- **Lines of Code:** ~7,500+
+### **Deployment**
+- cPanel compatible
+- Shared hosting ready
+- Easy installation wizard
 
 ---
 
-## 🤝 CONTRIBUTING
+## 📱 **ACCESS POINTS**
 
-Contributions are welcome! Please follow these steps:
+After installation:
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+**Frontend (Customer Site):**
+```
+https://yourdomain.com
+```
 
----
+**Admin Dashboard:**
+```
+https://yourdomain.com/backend/admin
+```
 
-## 📝 LICENSE
-
-This project is licensed under the MIT License.
-
----
-
-## 👥 TEAM
-
-**Developer:** Tamheed Nazir  
-**GitHub:** [@IamTamheedNazir](https://github.com/IamTamheedNazir)
+**API Endpoint:**
+```
+https://yourdomain.com/backend/api
+```
 
 ---
 
-## 📞 SUPPORT
+## 🔒 **SECURITY**
 
-For issues, questions, or support:
-- **GitHub Issues:** [Create an issue](https://github.com/IamTamheedNazir/umrahconnect-2.0/issues)
-- **Email:** tnsolution1s@gmail.com
-
----
-
-## 🎯 ROADMAP
-
-### **Completed:**
-- ✅ Complete Umrah booking system
-- ✅ PNR inventory management
-- ✅ Payment gateway integration
-- ✅ Multi-role system
-- ✅ Voucher generation
-- ✅ Email/WhatsApp notifications
-
-### **Planned:**
-- ⏳ Mobile app (React Native)
-- ⏳ Advanced analytics
-- ⏳ Multi-language support
-- ⏳ SMS notifications
-- ⏳ Advanced reporting
+- JWT-based authentication
+- Password hashing (bcrypt)
+- CSRF protection
+- SQL injection prevention
+- XSS protection
+- Rate limiting
+- Secure session management
 
 ---
 
-## 🌟 FEATURES HIGHLIGHT
+## 📞 **SUPPORT**
 
-### **PNR Inventory System:**
-The standout feature of UmrahConnect 2.0 is the advanced PNR Inventory Management System that allows travel agents to:
-
-- Purchase flight PNR blocks in bulk
-- Track inventory with TTL (Time To Live)
-- Sell seats to customers
-- Auto-generate professional vouchers
-- Send vouchers via Email & WhatsApp
-- Track profit/loss automatically
-- Get expiry alerts
-- Integrate with CRM & Accounting
-
-**This replaces manual Google Sheets tracking with a fully automated system!**
+- 📧 Email: support@umrahconnect.in
+- 📚 Documentation: https://docs.umrahconnect.in
+- 🐛 Issues: https://github.com/IamTamheedNazir/umrahconnect-2.0/issues
 
 ---
 
-## 🎉 ACKNOWLEDGMENTS
+## 📄 **LICENSE**
 
-Built with ❤️ for the travel industry.
-
-Special thanks to:
-- Laravel community
-- React community
-- All contributors
+This project is proprietary software. All rights reserved.
 
 ---
 
-## 📈 VERSION
+## 🙏 **ACKNOWLEDGMENTS**
 
-**Current Version:** 2.0.0  
-**Release Date:** January 2024  
-**Status:** Production Ready
-
----
-
-**🚀 Ready to revolutionize your travel business!** 🚀
+Built with:
+- Laravel Framework
+- React
+- Tailwind CSS
+- And many other amazing open-source projects
 
 ---
 
-## 🔗 LINKS
+## 🎉 **GET STARTED NOW!**
 
-- **Live Demo:** https://umrahconnect.in
-- **Documentation:** [docs/](docs/)
-- **API Docs:** [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
-- **GitHub:** https://github.com/IamTamheedNazir/umrahconnect-2.0
+1. **Read:** [COMPLETE_SETUP_GUIDE.md](COMPLETE_SETUP_GUIDE.md)
+2. **Download:** Clone this repository
+3. **Setup:** Run `./setup.sh`
+4. **Upload:** To your cPanel
+5. **Install:** Visit `/install/`
+6. **Launch:** Start accepting bookings!
 
 ---
 
-**Made with ❤️ for UmrahConnect**
+**Made with ❤️ for Umrah operators worldwide**
+
+**Happy selling! 🕌**
