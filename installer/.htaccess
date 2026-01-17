@@ -1,0 +1,26 @@
+# UmrahConnect 2.0 - Installer .htaccess
+
+# Disable directory listing
+Options -Indexes
+
+# Set default index file
+DirectoryIndex index.php
+
+# Enable error display for debugging (remove after installation)
+php_flag display_errors on
+php_value error_reporting E_ALL
+
+# Set PHP version (if supported by your host)
+# AddHandler application/x-httpd-php81 .php
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to installer files
+<FilesMatch "\.(php|html|css|js|png|jpg|jpeg|gif|ico)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
