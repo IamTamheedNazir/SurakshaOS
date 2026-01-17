@@ -92,9 +92,13 @@ class DatabaseSeeder extends Seeder
             Setting::create($setting);
         }
 
+        // Run CMS Seeder
+        $this->call(CMSSeeder::class);
+
         $this->command->info('Database seeded successfully!');
         $this->command->info('Admin: admin@umrahconnect.in / admin123');
         $this->command->info('Vendor: vendor@umrahconnect.in / vendor123');
         $this->command->info('Customer: customer@umrahconnect.in / customer123');
+        $this->command->info('CMS data (banners, testimonials, themes, settings) seeded!');
     }
 }
