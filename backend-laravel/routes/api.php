@@ -12,6 +12,10 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PNRInventoryController;
 use App\Http\Controllers\PNRSaleController;
+use App\Http\Controllers\BannerController;
+use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +50,12 @@ Route::prefix('packages')->group(function () {
     Route::get('/featured', [PackageController::class, 'featured']);
     Route::get('/{id}', [PackageController::class, 'show']);
 });
+
+// CMS Public Routes
+Route::get('/banners/active', [BannerController::class, 'active']);
+Route::get('/testimonials', [TestimonialController::class, 'index']);
+Route::get('/themes/active', [ThemeController::class, 'active']);
+Route::get('/settings', [SettingController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -178,6 +188,47 @@ Route::middleware('auth:api')->group(function () {
         // Settings
         Route::get('/settings', [AdminController::class, 'settings']);
         Route::put('/settings', [AdminController::class, 'updateSettings']);
+
+        // CMS Management Routes
+        // Banners
+        Route::prefix('banners')->group(function () {
+            Route::get('/', [BannerController::class, 'index']);
+            Route::post('/', [BannerController::class, 'store']);
+            Route::get('/{id}', [BannerController::class, 'show']);
+            Route::put('/{id}', [BannerController::class, 'update']);
+            Route::delete('/{id}', [BannerController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active', [BannerController::class, 'toggleActive']);
+        });
+
+        // Testimonials
+        Route::prefix('testimonials')->group(function () {
+            Route::get('/', [TestimonialController::class, 'all']);
+            Route::post('/', [TestimonialController::class, 'store']);
+            Route::get('/{id}', [TestimonialController::class, 'show']);
+            Route::put('/{id}', [TestimonialController::class, 'update']);
+            Route::delete('/{id}', [TestimonialController::class, 'destroy']);
+            Route::patch('/{id}/toggle-active', [TestimonialController::class, 'toggleActive']);
+            Route::patch('/{id}/toggle-featured', [TestimonialController::class, 'toggleFeatured']);
+        });
+
+        // Themes
+        Route::prefix('themes')->group(function () {
+            Route::get('/', [ThemeController::class, 'index']);
+            Route::post('/', [ThemeController::class, 'store']);
+            Route::get('/{id}', [ThemeController::class, 'show']);
+            Route::put('/{id}', [ThemeController::class, 'update']);
+            Route::delete('/{id}', [ThemeController::class, 'destroy']);
+            Route::patch('/{id}/activate', [ThemeController::class, 'activate']);
+        });
+
+        // Settings
+        Route::prefix('settings')->group(function () {
+            Route::get('/all', [SettingController::class, 'all']);
+            Route::post('/', [SettingController::class, 'store']);
+            Route::post('/bulk', [SettingController::class, 'updateBulk']);
+            Route::get('/{key}', [SettingController::class, 'show']);
+            Route::delete('/{key}', [SettingController::class, 'destroy']);
+        });
     });
 });
 
