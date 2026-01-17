@@ -1,502 +1,342 @@
-# 🚀 UmrahConnect 2.0 - One-Click Installation Guide
+# 🚀 UmrahConnect 2.0 - Installation Guide
 
-## 📋 **EASY INSTALLATION LIKE CODECANYON**
+Complete guide to install UmrahConnect 2.0 on cPanel shared hosting with our new dynamic installer!
 
-Install UmrahConnect 2.0 in just 5 minutes with our beautiful installation wizard!
+---
+
+## 📋 **PREREQUISITES**
+
+Before you begin, make sure you have:
+
+### **1. Hosting Requirements**
+- ✅ cPanel shared hosting account
+- ✅ PHP 8.1 or higher
+- ✅ MySQL 5.7 or higher
+- ✅ Composer installed (or ability to upload vendor folder)
+- ✅ SSH access (optional but recommended)
+
+### **2. Required PHP Extensions**
+- PDO, PDO MySQL, MBString, OpenSSL, Tokenizer, XML, CType, JSON, BCMath
+
+### **3. What You'll Need**
+- Domain name (e.g., umrahconnect.in)
+- Database credentials
+- Admin email and password
 
 ---
 
 ## 🎯 **INSTALLATION METHODS**
 
-### **Method 1: One-Click Installer (Recommended)** ⭐
-- Beautiful installation wizard
-- Automatic database setup
-- No technical knowledge required
-- Takes 5 minutes
+### **Method 1: Dynamic Installer (Recommended)** ⚡
+**Time: 5 minutes** - Beautiful wizard interface, automatic setup
 
-### **Method 2: Manual Installation**
-- For advanced users
-- Full control over setup
-- Takes 15-20 minutes
+### **Method 2: Manual Installation** 🛠️
+**Time: 15 minutes** - Full control, command-line based
 
 ---
 
-## 🚀 **METHOD 1: ONE-CLICK INSTALLER**
+## 📦 **METHOD 1: DYNAMIC INSTALLER (RECOMMENDED)**
 
-### **Step 1: Download & Extract**
+### **Step 1: Download Repository**
 
-1. **Download** the UmrahConnect 2.0 package
-2. **Extract** the ZIP file
-3. You'll see this structure:
+Download from GitHub:
 ```
-umrahconnect-2.0/
-├── frontend/          (React application)
-├── backend/           (Node.js API)
-├── install/           (Installation wizard)
-├── docs/              (Documentation)
-└── README.md
+https://github.com/IamTamheedNazir/umrahconnect-2.0/archive/refs/heads/main.zip
 ```
 
-### **Step 2: Upload to Server**
-
-#### **Option A: cPanel File Manager**
-1. Login to cPanel
-2. Go to **File Manager**
-3. Navigate to `public_html`
-4. Upload the ZIP file
-5. Click **Extract**
-6. Move all files from extracted folder to `public_html`
-
-#### **Option B: FTP (FileZilla)**
-1. Connect to your server via FTP
-2. Navigate to `public_html` or `www` folder
-3. Upload all extracted files
-4. Wait for upload to complete
-
-### **Step 3: Set Permissions**
-
-Set these folder permissions to **755**:
-```
-public_html/
-├── storage/           (755)
-├── public/            (755)
-├── uploads/           (755)
-└── install/           (755)
+Or clone:
+```bash
+git clone https://github.com/IamTamheedNazir/umrahconnect-2.0.git
 ```
 
-**Via cPanel:**
-- Right-click folder → Change Permissions → Set to 755
+---
+
+### **Step 2: Prepare Files**
+
+1. Extract the ZIP file
+2. Rename `backend-laravel` to `backend`
+3. Your structure:
+   ```
+   umrahconnect-2.0/
+   ├── backend/          (Laravel backend)
+   ├── frontend/         (React frontend)
+   ├── installer/        (Installation wizard)
+   └── database/         (Database files)
+   ```
+
+---
+
+### **Step 3: Upload to cPanel**
+
+**Via File Manager:**
+1. Login to cPanel → File Manager
+2. Navigate to `public_html/`
+3. Upload all folders: `backend/`, `frontend/`, `installer/`, `database/`
 
 **Via FTP:**
-- Right-click folder → File Permissions → Set to 755
+1. Connect via FTP client
+2. Upload to `public_html/`
+
+---
+
+### **Step 4: Install Composer Dependencies**
+
+**Option A: Via SSH**
+```bash
+cd public_html/backend
+composer install --no-dev --optimize-autoloader
+```
+
+**Option B: Upload vendor folder**
+1. On local machine: `cd backend && composer install --no-dev`
+2. Upload `vendor/` folder to `public_html/backend/vendor/`
+
+---
+
+### **Step 5: Run Installation Wizard** 🎨
+
+1. **Visit:** `https://yourdomain.com/installer/`
+
+2. **Follow 5 steps:**
+
+   **Step 1: Requirements Check** ✅
+   - Auto-checks PHP version, extensions, permissions
+   - All green = ready to proceed
+
+   **Step 2: Database Configuration** 🗄️
+   - Enter MySQL credentials
+   - Test connection
+   - Auto-validates
+
+   **Step 3: Application Configuration** ⚙️
+   - Set app name, URL
+   - Choose environment (production)
+   - Configure debug mode
+
+   **Step 4: Admin Account** 👤
+   - Create admin credentials
+   - Set email and password
+
+   **Step 5: Installation** 🚀
+   - Auto creates .env file
+   - Generates app keys
+   - Runs migrations
+   - Seeds database
+   - Creates admin account
+   - Sets permissions
+
+3. **Done!** 🎉
+
+---
+
+### **Step 6: Post-Installation**
+
+1. **Delete installer** (security):
+   ```bash
+   rm -rf public_html/installer/
+   ```
+
+2. **Login to admin:**
+   ```
+   https://yourdomain.com/backend/admin
+   ```
+
+3. **Configure site:**
+   - Add packages
+   - Customize theme
+   - Set up payments
+
+---
+
+## 🛠️ **METHOD 2: MANUAL INSTALLATION**
+
+### **Step 1-3:** Same as Method 1
 
 ### **Step 4: Create Database**
 
-1. **cPanel → MySQL Databases**
-2. **Create Database:**
-   - Database Name: `umrahconnect`
-   - Click "Create Database"
-
-3. **Create User:**
-   - Username: `umrah_admin`
-   - Password: (generate strong password)
-   - Click "Create User"
-
-4. **Add User to Database:**
-   - Select user: `umrah_admin`
-   - Select database: `umrahconnect`
-   - Check "ALL PRIVILEGES"
-   - Click "Add"
-
-**Save these details - you'll need them!**
-
-### **Step 5: Run Installation Wizard**
-
-1. **Open your browser**
-2. **Navigate to:** `https://yourdomain.com/install`
-3. **Follow the 5-step wizard:**
-
-#### **Step 1: Requirements Check** ✅
-- System automatically checks requirements
-- All items should show green checkmarks
-- Click "Next Step"
-
-#### **Step 2: Database Configuration** 🗄️
-Fill in your database details:
-- **Database Type:** MySQL (or PostgreSQL)
-- **Database Host:** localhost
-- **Database Port:** 3306
-- **Database Name:** umrahconnect
-- **Database Username:** umrah_admin
-- **Database Password:** (your password)
-
-Click **"Test Connection"** to verify
-- ✅ Green = Success, click "Next Step"
-- ❌ Red = Check your details
-
-#### **Step 3: Application Configuration** ⚙️
-Configure your application:
-- **Application Name:** UmrahConnect
-- **Application URL:** https://yourdomain.com
-- **API URL:** https://yourdomain.com/api
-- **Default Currency:** INR (or your choice)
-- **Default Language:** English
-- **Timezone:** Asia/Kolkata (or your timezone)
-
-Click "Next Step"
-
-#### **Step 4: Admin Account** 👤
-Create your admin account:
-- **First Name:** Your first name
-- **Last Name:** Your last name
-- **Email:** admin@yourdomain.com
-- **Password:** (strong password, min 8 characters)
-- **Confirm Password:** (same password)
-
-Click **"Install Now"**
-
-#### **Step 5: Installation** 🎉
-Watch the magic happen:
-- Creating database tables... ✓
-- Running migrations... ✓
-- Seeding initial data... ✓
-- Creating admin account... ✓
-- Configuring application... ✓
-- Setting up file permissions... ✓
-- Finalizing installation... ✓
-
-**Installation Complete!** 🎊
-
-### **Step 6: Security (IMPORTANT!)** 🔒
-
-**Delete the install folder:**
-```bash
-# Via cPanel File Manager
-Delete: public_html/install/
-
-# Via FTP
-Delete: /public_html/install/
-
-# Via SSH
-rm -rf /path/to/public_html/install/
-```
-
-**Why?** For security - prevents unauthorized reinstallation.
-
-### **Step 7: Access Your Site** 🌐
-
-**Frontend (Customer Site):**
-- URL: `https://yourdomain.com`
-- Browse packages, make bookings
-
-**Admin Dashboard:**
-- URL: `https://yourdomain.com/admin`
-- Email: (your admin email)
-- Password: (your admin password)
-
-**Vendor Dashboard:**
-- URL: `https://yourdomain.com/vendor`
-- Create vendor account from admin
+cPanel → MySQL Databases:
+1. Create database: `umrahconnect_db`
+2. Create user: `umrahconnect_user`
+3. Add user to database with ALL PRIVILEGES
 
 ---
 
-## 🎯 **POST-INSTALLATION SETUP**
+### **Step 5: Configure .env**
 
-### **1. Configure Email (SMTP)**
+1. Copy `.env.example` to `.env`
+2. Edit values:
 
-Admin Dashboard → Settings → Email Settings
-```
-SMTP Host: smtp.gmail.com
-SMTP Port: 587
-SMTP User: your-email@gmail.com
-SMTP Password: your-app-password
-From Name: UmrahConnect
-From Email: noreply@yourdomain.com
-```
+```env
+APP_NAME=UmrahConnect
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
 
-**Gmail Setup:**
-1. Enable 2-Factor Authentication
-2. Generate App Password
-3. Use App Password in SMTP settings
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=umrahconnect_db
+DB_USERNAME=umrahconnect_user
+DB_PASSWORD=your_password
 
-### **2. Configure Payment Gateways**
-
-Admin Dashboard → Settings → Payment Gateways
-
-**Razorpay:**
-```
-Key ID: rzp_test_xxxxx
-Key Secret: xxxxx
-Mode: Test (change to Live later)
+JWT_SECRET=
 ```
 
-**Stripe:**
-```
-Publishable Key: pk_test_xxxxx
-Secret Key: sk_test_xxxxx
-Mode: Test (change to Live later)
-```
+---
 
-**PayPal:**
-```
-Client ID: xxxxx
-Client Secret: xxxxx
-Mode: Sandbox (change to Live later)
-```
+### **Step 6: Run Artisan Commands**
 
-### **3. Configure SMS/WhatsApp**
-
-Admin Dashboard → Settings → Notifications
-
-**Twilio (SMS/WhatsApp):**
-```
-Account SID: ACxxxxx
-Auth Token: xxxxx
-Phone Number: +1234567890
-WhatsApp Number: +1234567890
+**Via SSH:**
+```bash
+cd public_html/backend
+php artisan key:generate
+php artisan jwt:secret
+php artisan migrate --force
+php artisan db:seed --force
+php artisan config:clear
+php artisan cache:clear
 ```
 
-**MSG91 (SMS):**
-```
-Auth Key: xxxxx
-Sender ID: UMRAHC
-```
+**Without SSH - Create setup.php:**
+```php
+<?php
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
-### **4. Configure Cloud Storage**
+$kernel->call('key:generate', ['--force' => true]);
+$kernel->call('jwt:secret', ['--force' => true]);
+$kernel->call('migrate', ['--force' => true]);
+$kernel->call('db:seed', ['--force' => true]);
+$kernel->call('config:clear');
+$kernel->call('cache:clear');
 
-Admin Dashboard → Settings → Storage
-
-**AWS S3:**
-```
-Access Key: xxxxx
-Secret Key: xxxxx
-Bucket: umrahconnect-uploads
-Region: us-east-1
-```
-
-**Cloudinary:**
-```
-Cloud Name: xxxxx
-API Key: xxxxx
-API Secret: xxxxx
+echo "Setup complete!";
 ```
 
-### **5. Setup SSL Certificate**
+Visit: `https://yourdomain.com/backend/setup.php`
+**Delete after running!**
 
-**Via cPanel:**
-1. cPanel → SSL/TLS Status
-2. Enable AutoSSL (free Let's Encrypt)
-3. Wait for certificate to be issued
+---
 
-**Via Cloudflare (Free):**
-1. Add your domain to Cloudflare
-2. Update nameservers
-3. Enable SSL (Full)
-4. Enable "Always Use HTTPS"
-
-### **6. Configure Cron Jobs**
-
-cPanel → Cron Jobs
-
-**Add these cron jobs:**
+### **Step 7: Set Permissions**
 
 ```bash
-# Update exchange rates (daily at 2 AM)
-0 2 * * * cd /path/to/public_html && php artisan currency:update
-
-# Process subscription renewals (daily at 3 AM)
-0 3 * * * cd /path/to/public_html && php artisan subscriptions:renew
-
-# Send booking reminders (daily at 9 AM)
-0 9 * * * cd /path/to/public_html && php artisan bookings:remind
-
-# Process commission payouts (1st of month at 1 AM)
-0 1 1 * * cd /path/to/public_html && php artisan commissions:payout
+chmod -R 755 backend/storage
+chmod -R 755 backend/bootstrap/cache
 ```
+
+---
+
+### **Step 8: Create Admin**
+
+**Via Tinker:**
+```bash
+php artisan tinker
+```
+
+```php
+\App\Models\User::create([
+    'name' => 'Admin',
+    'email' => 'admin@yourdomain.com',
+    'password' => bcrypt('password'),
+    'role' => 'admin',
+    'email_verified_at' => now()
+]);
+```
+
+**Via SQL:**
+```sql
+INSERT INTO users (name, email, password, role, email_verified_at, created_at, updated_at)
+VALUES ('Admin', 'admin@yourdomain.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', NOW(), NOW(), NOW());
+```
+Default password: `password`
 
 ---
 
 ## 🔧 **TROUBLESHOOTING**
 
-### **Issue 1: Installation Page Not Loading**
+### **500 Error**
+- Check `.env` exists
+- Check `APP_KEY` generated
+- Check database credentials
+- Check logs: `backend/storage/logs/laravel.log`
 
-**Solution:**
+### **Database Connection Failed**
+- Verify database exists
+- Check user has access
+- Verify DB_HOST (usually `localhost`)
+- Verify DB_PORT (usually `3306`)
+
+### **Permission Denied**
 ```bash
-# Check .htaccess exists in public_html
-# Add this if missing:
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
+chmod -R 755 backend/storage
+chmod -R 755 backend/bootstrap/cache
 ```
-
-### **Issue 2: Database Connection Failed**
-
-**Check:**
-- Database name is correct
-- Username has privileges
-- Password is correct
-- Host is 'localhost' (not 127.0.0.1)
-
-**Test connection:**
-```bash
-mysql -u umrah_admin -p umrahconnect
-# Enter password when prompted
-```
-
-### **Issue 3: 500 Internal Server Error**
-
-**Solutions:**
-1. Check file permissions (755 for folders, 644 for files)
-2. Check .htaccess syntax
-3. Enable error display:
-```php
-// Add to index.php temporarily
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-```
-4. Check error logs:
-```bash
-# cPanel → Errors → Error Log
-# Or check: /home/username/logs/error_log
-```
-
-### **Issue 4: Blank Page After Installation**
-
-**Solutions:**
-1. Clear browser cache
-2. Check if .env file was created
-3. Check storage folder permissions
-4. Regenerate application key:
-```bash
-php artisan key:generate
-```
-
-### **Issue 5: Images Not Uploading**
-
-**Solutions:**
-1. Check uploads folder permissions (755)
-2. Check PHP upload limits:
-```php
-// php.ini
-upload_max_filesize = 10M
-post_max_size = 10M
-```
-3. Restart web server
 
 ---
 
-## 📊 **SYSTEM REQUIREMENTS**
+## 📱 **TESTING**
 
-### **Minimum Requirements:**
-- PHP 7.4 or higher
-- MySQL 5.7+ or PostgreSQL 12+
-- Node.js 14+ (for backend API)
-- 512 MB RAM
-- 1 GB Disk Space
-- cURL, OpenSSL, PDO extensions
+### **Test Backend API**
+```
+https://yourdomain.com/backend/api/health
+```
 
-### **Recommended Requirements:**
-- PHP 8.1 or higher
-- MySQL 8.0+ or PostgreSQL 14+
-- Node.js 18+
-- 2 GB RAM
-- 5 GB Disk Space
-- SSD Storage
-- SSL Certificate
+Expected:
+```json
+{
+  "success": true,
+  "message": "API is running"
+}
+```
 
----
+### **Test Admin Panel**
+```
+https://yourdomain.com/backend/admin
+```
 
-## 🎯 **QUICK START CHECKLIST**
-
-After installation, complete these tasks:
-
-### **Immediate (Day 1):**
-- [ ] Delete install folder
-- [ ] Change admin password
-- [ ] Configure email (SMTP)
-- [ ] Setup SSL certificate
-- [ ] Test email sending
-- [ ] Create test booking
-
-### **Within Week 1:**
-- [ ] Configure payment gateways (test mode)
-- [ ] Setup SMS/WhatsApp
-- [ ] Configure cloud storage
-- [ ] Add currencies
-- [ ] Add languages
-- [ ] Create vendor accounts
-- [ ] Add sample packages
-
-### **Before Going Live:**
-- [ ] Test all features
-- [ ] Switch payment gateways to live mode
-- [ ] Setup backup system
-- [ ] Configure cron jobs
-- [ ] Setup monitoring
-- [ ] Test on mobile devices
-- [ ] Create documentation for team
+### **Test Frontend**
+```
+https://yourdomain.com
+```
 
 ---
 
-## 🌟 **FEATURES AVAILABLE AFTER INSTALLATION**
+## 🎯 **NEXT STEPS**
 
-### **Customer Features:**
-✅ Browse packages
-✅ Search & filter
-✅ Book packages
-✅ Multiple payment options
-✅ Track bookings
-✅ Upload documents
-✅ Submit reviews
-✅ Support tickets
+1. ✅ Configure site settings
+2. ✅ Add Umrah packages
+3. ✅ Customize theme
+4. ✅ Set up payment gateway
+5. ✅ Configure email (SMTP)
+6. ✅ Test booking flow
 
-### **Vendor Features:**
-✅ Vendor dashboard
-✅ Package management
-✅ Booking management
-✅ Customer management
-✅ Payment tracking
-✅ Commission tracking
-✅ Reports & analytics
+---
 
-### **Admin Features:**
-✅ Complete admin dashboard
-✅ User management
-✅ Vendor management
-✅ Package management
-✅ Booking management
-✅ Payment management
-✅ Commission management
-✅ Subscription management
-✅ Advertisement management
-✅ Email templates
-✅ SMS/WhatsApp settings
-✅ Currency settings
-✅ Language settings
-✅ Referral & loyalty
-✅ Support tickets
-✅ Reports & analytics
+## 🔒 **SECURITY CHECKLIST**
+
+- [ ] Delete `installer/` folder
+- [ ] Delete `setup.php` (if created)
+- [ ] Change default admin password
+- [ ] Set `APP_DEBUG=false`
+- [ ] Set `APP_ENV=production`
+- [ ] Enable HTTPS (SSL)
+- [ ] Set up backups
 
 ---
 
 ## 📞 **SUPPORT**
 
-### **Need Help?**
-
-**Documentation:**
-- Installation Guide: `/docs/INSTALLATION.md`
-- User Guide: `/docs/USER_GUIDE.md`
-- Admin Guide: `/docs/ADMIN_GUIDE.md`
-- API Documentation: `/docs/API.md`
-
-**Contact:**
-- Email: support@umrahconnect.com
-- Website: https://umrahconnect.com
-- GitHub: https://github.com/IamTamheedNazir/umrahconnect-2.0
-
-**Community:**
-- Discord: (coming soon)
-- Forum: (coming soon)
+- 📧 Email: support@umrahconnect.in
+- 📚 Docs: https://docs.umrahconnect.in
+- 🐛 Issues: https://github.com/IamTamheedNazir/umrahconnect-2.0/issues
 
 ---
 
 ## 🎉 **CONGRATULATIONS!**
 
-**Your UmrahConnect 2.0 platform is now live!** 🚀
+UmrahConnect 2.0 is now installed and ready!
 
-**Next Steps:**
-1. Explore the admin dashboard
-2. Create your first package
-3. Test the booking process
-4. Invite vendors
-5. Start marketing!
-
-**Welcome to the future of Umrah travel booking!** 🕌✨
-
----
-
-**Built with ❤️ for UmrahConnect 2.0**
-**Version 3.0 - Installation Edition**
+Your Umrah booking platform is live. Happy selling! 🕌
