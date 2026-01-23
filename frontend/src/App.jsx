@@ -6,21 +6,21 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
-// Pages
-import Home from './pages/Home';
-import Packages from './pages/Packages';
-import PackageDetail from './pages/PackageDetail';
-import Booking from './pages/Booking';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import UserDashboard from './pages/UserDashboard';
-import VendorDashboard from './pages/VendorDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import AboutUs from './pages/AboutUs';
-import Contact from './pages/Contact';
-import FAQ from './pages/FAQ';
-import Terms from './pages/Terms';
+// Pages - Using correct paths
+import HomePage from './pages/HomePage.jsx';
+import PackagesPage from './pages/packages/PackagesPage.jsx';
+import PackageDetailsPage from './pages/packages/PackageDetailsPage.jsx';
+import BookingPage from './pages/BookingPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import UserDashboard from './pages/UserDashboard.jsx';
+import VendorDashboard from './pages/VendorDashboard.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import AboutUs from './pages/AboutUs.jsx';
+import Contact from './pages/Contact.jsx';
+import FAQ from './pages/FAQ.jsx';
+import Terms from './pages/Terms.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -62,9 +62,9 @@ function App() {
         <Navbar />
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/packages" element={<Packages />} />
-          <Route path="/package/:id" element={<PackageDetail />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/packages" element={<PackagesPage />} />
+          <Route path="/package/:id" element={<PackageDetailsPage />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
@@ -75,7 +75,7 @@ function App() {
             path="/login" 
             element={
               <PublicRoute>
-                <Login />
+                <LoginPage />
               </PublicRoute>
             } 
           />
@@ -83,7 +83,7 @@ function App() {
             path="/register" 
             element={
               <PublicRoute>
-                <Register />
+                <RegisterPage />
               </PublicRoute>
             } 
           />
@@ -91,25 +91,25 @@ function App() {
             path="/forgot-password" 
             element={
               <PublicRoute>
-                <ForgotPassword />
+                <ForgotPasswordPage />
               </PublicRoute>
             } 
           />
           
           {/* Protected Routes - Customer */}
           <Route 
-            path="/booking/:packageId" 
-            element={
-              <ProtectedRoute>
-                <Booking />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute requiredRole="customer">
                 <UserDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/booking/:id" 
+            element={
+              <ProtectedRoute>
+                <BookingPage />
               </ProtectedRoute>
             } 
           />
@@ -134,27 +134,13 @@ function App() {
             } 
           />
           
-          {/* 404 Not Found */}
-          <Route path="*" element={<NotFound />} />
+          {/* 404 Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Footer />
       </div>
     </Router>
   );
 }
-
-// 404 Not Found Component
-const NotFound = () => {
-  return (
-    <div className="not-found-page">
-      <div className="not-found-content">
-        <h1>404</h1>
-        <h2>Page Not Found</h2>
-        <p>The page you're looking for doesn't exist or has been moved.</p>
-        <a href="/" className="btn-primary">Go Home</a>
-      </div>
-    </div>
-  );
-};
 
 export default App;
