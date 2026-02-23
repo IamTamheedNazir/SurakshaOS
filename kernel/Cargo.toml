@@ -1,0 +1,53 @@
+[package]
+name = "suraksha-kernel"
+version = "0.1.0"
+edition = "2021"
+authors = ["SurakshaOS Team <dev@suraksha-os.in>"]
+license = "GPL-3.0"
+description = "SurakshaOS Microkernel - Formally Verified, Capability-Based Security"
+repository = "https://github.com/IamTamheedNazir/SurakshaOS"
+keywords = ["os", "kernel", "microkernel", "risc-v", "security"]
+categories = ["no-std", "embedded", "os"]
+
+[dependencies]
+# Core dependencies (no_std compatible)
+spin = "0.9"
+bitflags = "2.4"
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+
+# RISC-V specific
+riscv = "0.11"
+riscv-rt = "0.12"
+
+# Capability system
+capability = { path = "../libs/capability" }
+
+# Memory management
+buddy_system_allocator = "0.9"
+
+# Cryptography (post-quantum)
+pqcrypto-ml-kem = "0.1"
+pqcrypto-ml-dsa = "0.1"
+
+[dev-dependencies]
+# Testing
+kani-verifier = "0.40"
+proptest = "1.4"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Better optimization
+panic = "abort"     # Smaller binary
+strip = true        # Strip symbols
+
+[profile.dev]
+opt-level = 0
+debug = true
+panic = "abort"
+
+[features]
+default = ["shakti"]
+shakti = []         # SHAKTI C-Class support
+arm-rme = []        # ARM RME fallback
+formal-verify = []  # Enable formal verification hooks
