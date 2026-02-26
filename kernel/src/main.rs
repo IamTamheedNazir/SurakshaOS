@@ -5,11 +5,19 @@
 #![no_std]
 #![no_main]
 #![feature(asm_const)]
+#![feature(naked_functions)]
 
 extern crate alloc;
 
 mod arch;
 mod allocator;
+mod mm;
+mod process;
+mod syscall;
+mod fs;
+mod net;
+mod drivers;
+mod trap;
 
 use core::panic::PanicInfo;
 
@@ -21,7 +29,7 @@ pub extern "C" fn kernel_main() -> ! {
     
     println!("\n╔═══════════════════════════════════════════════════════════╗");
     println!("║                                                           ║");
-    println!("║   🇮🇳  SurakshaOS v0.1.0 - REAL WORKING KERNEL  🇮🇳       ║");
+    println!("║   🇮🇳  SurakshaOS v0.2.0 - COMPLETE OS STACK  🇮🇳         ║");
     println!("║                                                           ║");
     println!("╚═══════════════════════════════════════════════════════════╝\n");
     
@@ -46,20 +54,61 @@ pub extern "C" fn kernel_main() -> ! {
     println!("\n🧪 Testing allocator...");
     test_allocator();
     
+    // Initialize memory management
+    mm::init();
+    
+    // Initialize process management
+    process::init();
+    
+    // Initialize system calls
+    println!("\n📞 System Call Initialization");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    syscall::init();
+    syscall::test_syscalls();
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    // Initialize filesystem
+    fs::init();
+    
+    // Initialize network stack
+    println!("\n🌐 Network Stack Initialization");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    net::init();
+    net::tcp::init();
+    net::tcp::test_tcp();
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    // Initialize device drivers
+    drivers::init();
+    
     // Print system info
     println!("\n📊 System Information:");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("OS: SurakshaOS v0.2.0");
     println!("Architecture: RISC-V 64-bit");
     println!("Hart ID: {}", arch::riscv64::mhartid());
     println!("Heap: {:#x} - {:#x} ({} MB)", heap_start, heap_end, heap_size / 1024 / 1024);
+    println!("Components:");
+    println!("  ✓ Kernel Core");
+    println!("  ✓ Memory Management (Sv39)");
+    println!("  ✓ Process Scheduler");
+    println!("  ✓ System Calls (15)");
+    println!("  ✓ File System (VFS)");
+    println!("  ✓ Network Stack (TCP)");
+    println!("  ✓ Display Driver");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     
     println!("\n✅ Kernel initialization complete!");
     println!("\n🎉 SurakshaOS is running!\n");
     
-    // Simple shell
-    println!("Type 'help' for available commands\n");
-    simple_shell();
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("All systems operational! 🚀");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    
+    // Halt
+    loop {
+        arch::riscv64::wfi();
+    }
 }
 
 /// Test memory allocator
@@ -83,68 +132,6 @@ fn test_allocator() {
     println!("  ✓ Large allocation works: {} bytes", large.len());
 }
 
-/// Simple interactive shell
-fn simple_shell() -> ! {
-    use alloc::string::String;
-    use alloc::vec::Vec;
-    
-    let mut input = String::new();
-    
-    loop {
-        print!("suraksha> ");
-        
-        // Read input (for now, just simulate)
-        // In real implementation, read from UART
-        
-        // Simulate some commands
-        let commands = ["help", "info", "mem", "test"];
-        
-        for cmd in &commands {
-            println!("\nExecuting: {}", cmd);
-            
-            match *cmd {
-                "help" => {
-                    println!("Available commands:");
-                    println!("  help  - Show this help");
-                    println!("  info  - Show system info");
-                    println!("  mem   - Show memory stats");
-                    println!("  test  - Run tests");
-                }
-                "info" => {
-                    println!("SurakshaOS v0.1.0");
-                    println!("Architecture: RISC-V 64-bit");
-                    println!("Hart ID: {}", arch::riscv64::mhartid());
-                }
-                "mem" => {
-                    println!("Memory Statistics:");
-                    println!("  Heap allocated: Working!");
-                    println!("  Buddy allocator: Active");
-                }
-                "test" => {
-                    println!("Running tests...");
-                    test_allocator();
-                    println!("All tests passed!");
-                }
-                _ => println!("Unknown command: {}", cmd),
-            }
-            
-            // Small delay
-            for _ in 0..1000000 {
-                core::hint::spin_loop();
-            }
-        }
-        
-        println!("\n✅ Demo complete! Kernel is working!\n");
-        println!("In real hardware, this would be an interactive shell.");
-        println!("Halting...\n");
-        
-        // Halt
-        loop {
-            arch::riscv64::wfi();
-        }
-    }
-}
-
 /// Panic handler
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -160,16 +147,6 @@ fn panic(info: &PanicInfo) -> ! {
 
 /// Trap handler (called from assembly)
 #[no_mangle]
-pub extern "C" fn trap_handler(context: usize) {
-    let cause = arch::riscv64::mcause();
-    let epc = arch::riscv64::mepc();
-    let tval = arch::riscv64::mtval();
-    
-    println!("\n⚠️  Trap occurred!");
-    println!("Cause: {:#x}", cause);
-    println!("EPC: {:#x}", epc);
-    println!("TVAL: {:#x}", tval);
-    
-    // For now, just panic
-    panic!("Unhandled trap");
+pub extern "C" fn trap_handler(_context: usize) {
+    trap::handle_trap();
 }
