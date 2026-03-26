@@ -163,3 +163,25 @@ graph TB
     style A fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
     style E fill:#orange,stroke:#fff,stroke-width:2px,color:#fff
     style G fill:#4A90E2,stroke:#fff,stroke-width:2px,color:#fff
+
+## 🏗️ **Architecture Overview**
+
+```mermaid
+graph TB
+    A[📱 Native Applications] --> B[🎨 SurakshaUI Framework]
+    B --> C[🔧 System Services]
+    C --> D[🛡️ Security & Crypto Layer]
+    D --> E[⚡ SurakshaKernel - Rust]
+    E --> F[🔩 Hardware Abstraction Layer]
+    F --> G[🏭 RISC-V SHAKTI Processor]
+    
+    H[📞 Telephony] --> C
+    I[🌐 Networking] --> C
+    J[📁 Storage] --> C
+    K[🔋 Power Mgmt] --> C
+    
+    style A fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
+    style E fill:#orange,stroke:#fff,stroke-width:2px,color:#fff
+    style G fill:#4A90E2,stroke:#fff,stroke-width:2px,color:#fff
+    style D fill:#red,stroke:#fff,stroke-width:2px,color:#fff
+
