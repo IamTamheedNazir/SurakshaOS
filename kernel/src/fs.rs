@@ -2,7 +2,8 @@
 /// Adds stat(), list_dir(), and the FileInfo type needed by the shell.
 /// Sits on top of the existing in-memory VFS from v0.1.
 
-use alloc::{string::String, vec::Vec};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,6 @@ enum VfsNode {
 }
 
 use spin::Mutex;
-use alloc::boxed::Box;
 
 static VFS_ROOT: Mutex<Option<VfsNode>> = Mutex::new(None);
 
@@ -37,6 +37,10 @@ fn split_path(path: &str) -> Vec<&str> {
 }
 
 // ─── public API ───────────────────────────────────────────────────────────────
+
+pub fn create_file(path: &str) -> Result<(), &'static str> {
+    write_file(path, &[])
+}
 
 pub fn create_dir(path: &str) -> Result<(), &'static str> {
     let mut root = VFS_ROOT.lock();
