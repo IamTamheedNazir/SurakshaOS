@@ -3,8 +3,14 @@
 /// Handles: command parsing, built-in commands, environment variables,
 /// command history, tab-completion stubs, and piping groundwork.
 
-use crate::console::{print, println, read_char, read_line};
-use crate::fs::{list_dir, read_file, write_file, create_dir, remove_file, stat, FileInfo};
+extern crate alloc;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+
+use crate::{print, println};
+use crate::console::read_line;
+use crate::fs::{list_dir, read_file, write_file, create_dir, remove_file, stat};
 use crate::process::{current_pid, uptime_ms};
 use crate::memory::{heap_used, heap_total};
 

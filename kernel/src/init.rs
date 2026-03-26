@@ -3,9 +3,12 @@
 /// Responsible for: setting up the environment, launching services,
 /// and handing off to the interactive shell.
 
-use crate::process::{ProcessId, spawn_process};
-use crate::console::{print, println, set_color, Color};
-use crate::fs::{create_dir, create_file, write_file};
+extern crate alloc;
+use alloc::vec::Vec;
+
+use crate::{print, println};
+use crate::process::ProcessId;
+use crate::fs::{create_dir, write_file};
 use crate::shell::Shell;
 
 pub struct InitSystem {
@@ -83,7 +86,7 @@ impl InitSystem {
         write_file("/etc/os-release", b"NAME=SurakshaOS\nVERSION=0.2.0\n").ok();
         write_file(
             "/etc/motd",
-            b"Welcome to SurakshaOS — Digital Sovereignty for All\n",
+            b"Welcome to SurakshaOS - Digital Sovereignty for All\n",
         )
         .ok();
         println!("OK");

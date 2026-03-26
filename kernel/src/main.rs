@@ -8,6 +8,11 @@
 
 extern crate alloc;
 
+use core::arch::global_asm;
+
+// Include RISC-V boot assembly (sets up stack, clears BSS, calls kernel_main)
+global_asm!(include_str!("boot.S"));
+
 // ─── kernel modules ───────────────────────────────────────────────────────────
 pub mod console;   // UART driver + print!/println! macros
 pub mod memory;    // Buddy allocator (existing from v0.1)
@@ -60,9 +65,7 @@ fn panic(info: &PanicInfo) -> ! {
     if let Some(loc) = info.location() {
         println!("  at {}:{}:{}", loc.file(), loc.line(), loc.column());
     }
-    if let Some(msg) = info.message() {
-        println!("  {}", msg);
-    }
+    println!("  {}", info);
     // Halt all harts
     loop {
         unsafe { core::arch::asm!("wfi", options(nomem, nostack)); }
