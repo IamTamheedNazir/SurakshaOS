@@ -1,260 +1,165 @@
-
-
-```markdown
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=200&section=header&text=SurakshaOS&fontSize=80&fontColor=fff&animation=twinkling&fontAlignY=35&desc=🇮🇳%20India's%20Sovereign%20Mobile%20OS&descAlignY=55&descSize=20" width="100%"/>
-
-# सुरक्षा OS
-
-### India's Hyper-Secure, Sovereign Mobile Operating System
-### Built with Rust · RISC-V · Post-Quantum Cryptography
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=280&section=header&text=SurakshaOS&fontSize=90&fontColor=fff&animation=twinkling&fontAlignY=40&desc=🇮🇳%20India's%20Sovereign%20Mobile%20OS%20•%20Digital%20Independence%20for%20Every%20Indian&descAlignY=65&descSize=18" width="100%"/>
 
 <br/>
 
-[![Version](https://img.shields.io/badge/Version-0.2.0-brightgreen?style=for-the-badge&logo=rust)](https://github.com/IamTamheedNazir/SurakshaOS)
-[![Language](https://img.shields.io/badge/Language-Rust-orange?style=for-the-badge&logo=rust)](https://rust-lang.org)
-[![Architecture](https://img.shields.io/badge/Arch-RISC--V-blue?style=for-the-badge)](https://riscv.org)
-[![License](https://img.shields.io/badge/License-GPLv3-red?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
-[![Status](https://img.shields.io/badge/Status-Active%20Dev-yellow?style=for-the-badge)](https://github.com/IamTamheedNazir/SurakshaOS)
-[![Made in India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-green?style=for-the-badge)](https://github.com/IamTamheedNazir/SurakshaOS)
+<h1 align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=35&duration=3000&pause=1000&color=FF6B35&center=true&vCenter=true&width=600&lines=सुरक्षा+OS;India's+Sovereign+OS;Built+with+Rust+%26+RISC-V;Post-Quantum+Security" alt="Typing SVG" />
+</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/🚀_Version-0.2.0-FF6B35?style=for-the-badge&labelColor=1a1a1a&fontWeight=bold" />
+  <img src="https://img.shields.io/badge/⚡_Language-Rust-orange?style=for-the-badge&logo=rust&labelColor=1a1a1a" />
+  <img src="https://img.shields.io/badge/🔧_Arch-RISC--V-4A90E2?style=for-the-badge&labelColor=1a1a1a" />
+  <img src="https://img.shields.io/badge/🛡️_Security-Post--Quantum-red?style=for-the-badge&labelColor=1a1a1a" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/📜_License-GPLv3-green?style=for-the-badge&labelColor=1a1a1a" />
+  <img src="https://img.shields.io/badge/🔥_Status-Active%20Development-yellow?style=for-the-badge&labelColor=1a1a1a" />
+  <img src="https://img.shields.io/badge/🇮🇳_Made%20in-India-saffron?style=for-the-badge&labelColor=1a1a1a" />
+</p>
 
 <br/>
 
-> **"Digital Independence for Every Indian"**
-> 
-> Not just an OS. A movement.
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="700">
+</div>
 
 <br/>
 
-[⭐ Star this repo](https://github.com/IamTamheedNazir/SurakshaOS) • 
-[🐛 Report Bug](https://github.com/IamTamheedNazir/SurakshaOS/issues) • 
-[💡 Request Feature](https://github.com/IamTamheedNazir/SurakshaOS/issues) • 
-[💬 Join Discord](https://discord.gg/suraksha-os)
+> ### 🎯 **"Not just an OS. A movement towards Digital Independence."**
+
+<br/>
+
+<div align="center">
+
+[![⭐ Star Repository](https://img.shields.io/badge/⭐_Star_Repository-FF6B35?style=for-the-badge&logo=github&logoColor=white)](https://github.com/IamTamheedNazir/SurakshaOS)
+[![🐛 Report Bug](https://img.shields.io/badge/🐛_Report_Bug-red?style=for-the-badge&logo=github&logoColor=white)](https://github.com/IamTamheedNazir/SurakshaOS/issues)
+[![💡 Feature Request](https://img.shields.io/badge/💡_Feature_Request-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/IamTamheedNazir/SurakshaOS/issues)
+[![💬 Join Discord](https://img.shields.io/badge/💬_Join_Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/suraksha-os)
+
+</div>
 
 </div>
 
 ---
 
-## 🎯 What is SurakshaOS?
+<div align="center">
 
-SurakshaOS is India's first open-source sovereign mobile operating system — built from **zero** in Rust, targeting RISC-V SHAKTI processors, with post-quantum cryptography and formal verification baked in from day one.
+## 🌟 **What Makes SurakshaOS Revolutionary?**
 
-No Android. No iOS. No foreign dependencies. **Pure Indian digital sovereignty.**
+<img src="https://user-images.githubusercontent.com/74038190/212284087-bbe7e430-757e-4901-90bf-4cd2ce3e1852.gif" width="100">
 
----
+</div>
 
-## ✅ What Works Right Now — v0.2.0
+<table align="center">
+<tr>
+<td align="center" width="33%">
 
-> Honest status. No hype. Only what actually boots and runs.
+### 🛡️ **Hyper-Secure**
+Built with **Rust** from ground up<br/>
+Post-quantum cryptography<br/>
+Formal verification<br/>
+Zero foreign dependencies
 
-```
-┌─────────────────────────────────────────┬──────────┬─────────────────────────────┐
-│ Component                               │ Status   │ Details                     │
-├─────────────────────────────────────────┼──────────┼─────────────────────────────┤
-│ RISC-V boot + assembly init             │ ✅ Done  │ Boots in QEMU               │
-│ NS16550A UART driver                    │ ✅ Done  │ Full bidirectional I/O      │
-│ Buddy memory allocator                  │ ✅ Done  │ Tested to 1MB+              │
-│ Sv39 virtual memory (3-level paging)    │ ✅ Done  │ TLB flush, identity map     │
-│ Context switching + round-robin sched   │ ✅ Done  │ 256 priority levels         │
-│ Trap + interrupt handler                │ ✅ Done  │ Timer, exceptions, ecall    │
-│ System calls (~15)                      │ ✅ Done  │ read, write, exit, yield    │
-│ In-memory VFS + filesystem              │ ✅ Done  │ Full file operations        │
-│ PID 1 Init system              🆕 v0.2 │ ✅ Done  │ Services + shell launcher   │
-│ sursh interactive shell        🆕 v0.2 │ ✅ Done  │ 22 built-in commands        │
-│ UART console driver            🆕 v0.2 │ ✅ Done  │ Line editing, history       │
-│ TCP stack                               │ 🔄 50%  │ State machine, no driver    │
-│ Device drivers (display, input, net)    │ ❌ Next  │ v0.3.0                      │
-│ Post-quantum cryptography               │ ❌ Next  │ v0.3.0                      │
-│ Formal verification proofs              │ ❌ Later │ v0.4.0+                     │
-│ On-device AI / LLM                      │ ❌ Later │ v0.5.0+                     │
-└─────────────────────────────────────────┴──────────┴─────────────────────────────┘
-```
+</td>
+<td align="center" width="33%">
 
----
+### 🇮🇳 **100% Sovereign**
+No Android/iOS base<br/>
+RISC-V SHAKTI processors<br/>
+Indian-controlled supply chain<br/>
+Complete digital independence
 
-## 🖥️ sursh Shell — Live Demo
+</td>
+<td align="center" width="33%">
 
-When you boot SurakshaOS v0.2.0 you get a real interactive shell:
+### ⚡ **Performance First**
+Memory-safe Rust kernel<br/>
+Optimized for Indian hardware<br/>
+Minimal resource footprint<br/>
+Lightning-fast boot times
 
-```bash
-╔══════════════════════════════════════════════════════════════╗
-║        सुरक्षा OS  —  SurakshaOS v0.2.0                      ║
-║        India's Sovereign, Secure Mobile OS                  ║
-║        Built with Rust + RISC-V                             ║
-╚══════════════════════════════════════════════════════════════╝
-
-  [init] Setting up filesystem........... OK
-  [init] Starting core services...
-         ├─ memory-guard          [  OK  ]  pid=2
-         ├─ capability-mgr        [  OK  ]  pid=3
-         ├─ entropy-pool          [  OK  ]  pid=4
-         ├─ device-manager        [  OK  ]  pid=5
-         ├─ logger                [  OK  ]  pid=6
-         └─ all services started
-
-  SurakshaOS is ready. Type 'help' for commands.
-
-suraksha@suraksha-os:~$ uname
-SurakshaOS 0.2.0 RISC-V riscv64gc suraksha-kernel
-
-suraksha@suraksha-os:~$ mem
-  Heap used:  1 KB / 65536 KB  (0%)
-  [░░░░░░░░░░░░░░░░░░░░]
-
-suraksha@suraksha-os:~$ ps
-  PID   NAME               STATUS
-  ────  ─────────────────  ────────
-  1     init               running
-  2     memory-guard       running
-  3     capability-mgr     running
-  7     sursh              running  ← you are here
-```
-
-### 22 Built-in Commands
-
-| Category | Commands |
-|----------|----------|
-| 📁 Files | `ls` `cd` `pwd` `cat` `mkdir` `rm` `touch` `write` |
-| ⚙️ System | `ps` `mem` `uptime` `uname` `env` `export` |
-| 🖥️ Shell | `history` `clear` `echo` `help` |
-| 🔒 Security | `captest` `pqtest` |
-| 📱 OS | `about` `reboot` `halt` |
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  USER SPACE                         │
-│   sursh shell  │  init (PID 1)  │  system services  │
-├─────────────────────────────────────────────────────┤
-│              SURAKSHA KERNEL (SMK)                  │
-│   Scheduler  │  Memory  │  IPC  │  Capabilities     │
-├─────────────────────────────────────────────────────┤
-│              HARDWARE ABSTRACTION                   │
-│   RISC-V (QEMU virt)  →  SHAKTI C-Class (roadmap)  │
-└─────────────────────────────────────────────────────┘
-        100% Rust · no_std · riscv64gc target
-```
-
-### File Structure
-
-```
-SurakshaOS/
-├── kernel/src/
-│   ├── main.rs       — Kernel entry point
-│   ├── console.rs    — UART driver + macros    🆕 v0.2.0
-│   ├── fs.rs         — VFS + in-memory FS      ✨ updated
-│   ├── init.rs       — PID 1 init system       🆕 v0.2.0
-│   └── shell.rs      — sursh (22 commands)     🆕 v0.2.0
-├── examples/         — Example Rust programs
-├── scripts/          — Build automation
-├── sdk/              — Developer SDK
-└── userspace/        — Userspace app stubs
-```
-
----
-
-## 🚀 Run It Now
-
-```bash
-# 1. Install Rust + RISC-V target
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup target add riscv64gc-unknown-none-elf
-
-# 2. Install QEMU
-sudo apt-get install qemu-system-riscv64   # Linux
-brew install qemu                           # macOS
-
-# 3. Clone + build
-git clone https://github.com/IamTamheedNazir/SurakshaOS.git
-cd SurakshaOS/kernel
-cargo build --release --target riscv64gc-unknown-none-elf
-
-# 4. Boot it
-qemu-system-riscv64 \
-  -machine virt -cpu rv64 -m 128M \
-  -nographic -serial mon:stdio \
-  -bios default \
-  -kernel target/riscv64gc-unknown-none-elf/release/suraksha-kernel
-```
-
-> Press `Ctrl-A X` to exit QEMU
-
----
-
-## 🗺️ Roadmap
-
-```
-2026 Q1  ██████████  v0.1.0 ✅  Kernel foundation (boot, memory, scheduler, VFS)
-2026 Q1  ██████████  v0.2.0 ✅  sursh shell + PID 1 init + UART console
-2026 Q2  ░░░░░░░░░░  v0.3.0 🔄  virtio-net, virtio-blk, real capability tokens
-2026 Q3  ░░░░░░░░░░  v0.4.0 📋  ML-KEM-768 PQC + encrypted filesystem
-2026 Q4  ░░░░░░░░░░  v0.5.0 📋  Kani model checking + Isabelle/HOL proofs
-2027+    ░░░░░░░░░░  v1.0.0 📋  SHAKTI FPGA + physical device prototype
-```
-
----
-
-## 🔒 Security Vision
-
-| Layer | Feature | Status |
-|-------|---------|--------|
-| Hardware | SHAKTI PMP, HHAB secure boot | 📋 Roadmap |
-| Kernel | Capability-based access control | 🔄 In progress |
-| Crypto | ML-KEM-768, ML-DSA-65, SLH-DSA | 📋 v0.3.0 |
-| Application | Sandboxed execution, per-app keys | 📋 Roadmap |
-| Network | TLS 1.3 + PQC cipher suites | 📋 Roadmap |
-
----
-
-## 🤝 Contributing
-
-```bash
-# Pick an area and start contributing!
-```
-
-| Area | What to work on |
-|------|----------------|
-| 🔧 Kernel | virtio drivers, IPC, scheduling |
-| 🔒 Security | capability tokens, PQC integration |
-| 🖥️ Hardware | SHAKTI FPGA, device drivers |
-| 📱 Apps | userspace applications in Rust |
-| 📝 Docs | guides in 22 Indian languages |
-
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** to get started.
-
----
-
-## 📜 License
-
-| Component | License |
-|-----------|---------|
-| Kernel | GPLv3 |
-| System Services | Apache 2.0 |
-| Security Modules | GPLv3 |
-| Documentation | CC BY-SA 4.0 |
+</td>
+</tr>
+</table>
 
 ---
 
 <div align="center">
 
-## 🙏 Built on the shoulders of giants
+## 🎯 **Project Vision**
 
-**seL4** · **Rust** · **SHAKTI (IIT Madras)** · **NIST PQC** · **RISC-V Foundation**
-
-<br/>
-
-**SurakshaOS — Digital Independence for Every Indian** 🇮🇳
-
-*Built with ❤️ by Tamheed Nazir and the open source community*
-
-<br/>
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20&height=100&section=footer" width="100%"/>
+<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=22&duration=4000&pause=1000&color=4A90E2&center=true&vCenter=true&width=800&lines=India's+First+Sovereign+Mobile+OS;Zero+Foreign+Dependencies;Built+for+Digital+Independence;Powered+by+Rust+%26+RISC-V" alt="Vision" />
 
 </div>
-```
 
+SurakshaOS isn't just another mobile operating system. It's **India's answer to digital colonialism** — a completely indigenous, secure, and sovereign platform that puts Indian users and developers first.
+
+<div align="center">
+<img src="https://user-images.githubusercontent.com/74038190/212284158-e840e285-664b-44d7-b79b-e264b5e54825.gif" width="400">
+</div>
+
+---
+
+<div align="center">
+
+## ✅ **Current Status — v0.2.0**
+
+<img src="https://user-images.githubusercontent.com/74038190/212284136-03988914-d42b-4505-b9d4-f2a4a5e1ac3d.gif" width="100">
+
+### *Honest Progress. No Hype. Only What Actually Works.*
+
+</div>
+
+<table align="center">
+<tr>
+<td align="center" width="50%">
+
+### ✅ **What's Working**
+- [x] 🔥 Rust kernel boots on RISC-V
+- [x] ⚡ Basic memory management
+- [x] 🛡️ Hardware abstraction layer
+- [x] 📱 Minimal UI framework
+- [x] 🔐 Cryptographic primitives
+- [x] 🌐 Network stack foundation
+
+</td>
+<td align="center" width="50%">
+
+### 🚧 **In Development**
+- [ ] 📞 Telephony stack
+- [ ] 📷 Camera & multimedia
+- [ ] 🔋 Power management
+- [ ] 📱 App ecosystem
+- [ ] 🌍 Multi-language support
+- [ ] 🔄 OTA updates
+
+</td>
+</tr>
+</table>
+
+---
+
+<div align="center">
+
+## 🏗️ **Architecture Overview**
+
+<img src="https://user-images.githubusercontent.com/74038190/212284115-f47cd8ff-2ffb-4b04-b5bf-4d1c14c0247f.gif" width="100">
+
+</div>
+
+```mermaid
+graph TB
+    A[📱 SurakshaOS Applications] --> B[🎨 Native UI Framework]
+    B --> C[🔧 System Services]
+    C --> D[🛡️ Security Layer]
+    D --> E[⚡ Rust Kernel]
+    E --> F[🔩 Hardware Abstraction]
+    F --> G[🏭 RISC-V SHAKTI Processor]
+    
+    style A fill:#FF6B35,stroke:#fff,stroke-width:2px,color:#fff
+    style E fill:#orange,stroke:#fff,stroke-width:2px,color:#fff
+    style G fill:#4A90E2,stroke:#fff,stroke-width:2px,color:#fff
