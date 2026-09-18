@@ -1,8 +1,7 @@
 //! SurakshaOS Virtual Memory Manager (VMM) — Sv39
 //!
-//! Implements RISC-V Sv39 page tables, address space management, and
-//! the kernel's initial memory mapping. This is the foundation for
-//! process isolation, user/kernel separation, and memory protection.
+//! Implements RISC-V Sv39 page tables, per-process address spaces,
+//! and the kernel's initial memory mapping.
 //!
 //! # Architecture
 //!
@@ -14,37 +13,25 @@
 //!   VPN[1] (bits 29:21) → Level 1 index
 //!   VPN[0] (bits 20:12) → Level 0 (leaf) index
 //!   Page Offset (bits 11:0) → byte within page
-//!
-//! Page sizes:
-//!   Level 0 (leaf): 4 KiB pages
-//!   Level 1 (leaf): 1 GiB megapages
-//!   Level 2 (non-leaf): always points to next table level
 //! ```
 //!
-//! # Initial Kernel Mapping
+//! # Per-Process Address Spaces
 //!
-//! On boot, the kernel identity-maps:
-//! 1. Lower 512 MiB of physical RAM — covers MMIO devices (UART, CLINT, PLIC)
-//! 2. The full 256 MiB kernel physical region — covers kernel code/data/heap
+//! Each process has its own `AddressSpace` with:
+//! - A root page table (physically allocated via PMA)
+//! - Copies of kernel mappings (MMIO + kernel region)
+//! - Process-specific user-space mappings
 //!
-//! After `enable_paging()`, all memory access goes through these mappings.
-//! Since this is an identity map, the kernel continues executing at the
-//! same physical addresses — no code relocation needed.
-//!
-//! # Future Work
-//!
-//! - Replace identity mapping with higher-half kernel mapping
-//!   (kernel at0xFFFF_FF80_0000_0000+, physical at 0x8000_0000+)
-//! - Per-process address spaces with user/kernel separation
-//! - Copy-on-write (COW) for fork()
-//! - Guard pages for stack overflow detection
+//! When switching between processes, `switch_address_space()` writes
+//! the new root table's PPN to the `satp` CSR. The kernel mappings
+//! are shared across all address spaces (same physical sub-tables),
+//! so the kernel remains accessible regardless of which process is active.
 //!
 //! # Safety
 //!
 //! This module directly manipulates page tables and the `satp` CSR.
-//! All `unsafe` blocks document their safety invariants. The page tables
-//! must be set up correctly before `enable_paging()` is called, as an
-//! incorrect mapping will cause an immediate fault.
+//! All `unsafe` blocks document their safety invariants. Incorrect
+//! page table setup will cause immediate hardware faults.
 
 use spin::Mutex;
 
@@ -71,57 +58,45 @@ pub const PTE_G: u64 = 1 << 5;
 
 /// Combination: valid + readable + writable + executable (for kernel data).
 pub const PTE_RWX: u64 = PTE_V | PTE_R | PTE_W | PTE_X;
-
 /// Combination: valid + readable + executable (for kernel code).
 pub const PTE_RX: u64 = PTE_V | PTE_R | PTE_X;
-
-/// Combination: valid + readable + writable (for kernel data, no execute).
+/// Combination: valid + readable + writable (for kernel data).
 pub const PTE_RW: u64 = PTE_V | PTE_R | PTE_W;
-
 /// Combination: valid + readable (for read-only mappings).
 pub const PTE_R_ONLY: u64 = PTE_V | PTE_R;
 
 /// Mask for extracting the physical page number (PPN) from a PTE.
-/// PTE bits [53:10] hold the PPN.
 const PTE_PPN_MASK: u64 = 0x003F_FFFF_FFC00;
-
 /// Mask for extracting flags from a PTE.
 const PTE_FLAGS_MASK: u64 = 0x3FF;
+
+// ─── Kernel Virtual Address Boundaries ──────────────────────────────────────
+
+/// Start of kernel physical region (identity-mapped in all address spaces).
+const KERNEL_REGION_START: usize = RAM_START;
+/// End of kernel physical region.
+const KERNEL_REGION_END: usize = RAM_START + RAM_SIZE;
+
+/// Check if a virtual address falls within the kernel's mapped region.
+/// Used to determine which page tables can be safely freed during
+/// address space destruction (kernel-mapped tables are shared).
+fn is_kernel_region(virt: usize) -> bool {
+    virt >= KERNEL_REGION_START && virt < KERNEL_REGION_END
+}
 
 // ─── Page Table Entry ───────────────────────────────────────────────────────
 
 /// A single Sv39 page table entry (8 bytes).
-///
-/// Layout:
-/// ```text
-/// Bit  0     : V  (Valid)
-/// Bit  1     : R  (Read)
-/// Bit  2     : W  (Write)
-/// Bit  3     : X  (Execute)
-/// Bit  4     : U  (User accessible)
-/// Bit  5     : G  (Global)
-/// Bit  6     : A  (Accessed)
-/// Bit  7     : D  (Dirty)
-/// Bits 8-9   : RSW (Reserved for Software)
-/// Bits 10-53 : PPN (Physical Page Number)
-/// Bits 54-63 : Reserved
-/// ```
 #[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
 pub struct PageTableEntry(u64);
 
 impl PageTableEntry {
     /// Create a new entry from a physical address and flags.
-    ///
-    /// The physical address must be page-aligned (low 12 bits zero).
-    ///
-    /// # Panics
-    ///
-    /// Panics if `phys_addr` is not page-aligned.
     pub fn new(phys_addr: PhysAddr, flags: u64) -> Self {
         assert!(
             phys_addr.is_page_aligned(),
-            "PageTableEntry::new: phys_addr {} is not page-aligned",
+            "PageTableEntry::new: phys_addr {} not page-aligned",
             phys_addr
         );
         let ppn = phys_addr.0 / PAGE_SIZE;
@@ -129,24 +104,15 @@ impl PageTableEntry {
     }
 
     /// Create an empty (invalid) entry.
-    pub fn empty() -> Self {
-        PageTableEntry(0)
-    }
+    pub fn empty() -> Self { PageTableEntry(0) }
 
     /// Check if this entry is valid.
     #[inline]
-    pub fn is_valid(&self) -> bool {
-        self.0 & PTE_V != 0
-    }
+    pub fn is_valid(&self) -> bool { self.0 & PTE_V != 0 }
 
-    /// Check if this entry is a leaf (points directly to a page).
-    ///
-    /// A leaf entry has at least one of R, W, or X set.
-    /// Non-leaf entries (pointers to next-level tables) have R=W=X=0.
+    /// Check if this entry is a leaf (R, W, or X set).
     #[inline]
-    pub fn is_leaf(&self) -> bool {
-        self.0 & (PTE_R | PTE_W | PTE_X) != 0
-    }
+    pub fn is_leaf(&self) -> bool { self.0 & (PTE_R | PTE_W | PTE_X) != 0 }
 
     /// Get the physical address this entry points to.
     #[inline]
@@ -154,19 +120,15 @@ impl PageTableEntry {
         PhysAddr(((self.0 & PTE_PPN_MASK) >> 10) * PAGE_SIZE)
     }
 
-    /// Get the raw flags of this entry.
+    /// Get the raw flags.
     #[inline]
-    pub fn flags(&self) -> u64 {
-        self.0 & PTE_FLAGS_MASK
-    }
+    pub fn flags(&self) -> u64 { self.0 & PTE_FLAGS_MASK }
 
-    /// Get the raw 64-bit value of this entry.
+    /// Get the raw 64-bit value.
     #[inline]
-    pub fn raw(&self) -> u64 {
-        self.0
-    }
+    pub fn raw(&self) -> u64 { self.0 }
 
-    /// Set the physical address this entry points to.
+    /// Set the physical address.
     #[inline]
     pub fn set_phys_addr(&mut self, phys_addr: PhysAddr) {
         assert!(phys_addr.is_page_aligned());
@@ -174,7 +136,7 @@ impl PageTableEntry {
         self.0 = (self.0 & !PTE_PPN_MASK) | ((ppn as u64) << 10);
     }
 
-    /// Set the flags of this entry.
+    /// Set the flags.
     #[inline]
     pub fn set_flags(&mut self, flags: u64) {
         self.0 = (self.0 & !PTE_FLAGS_MASK) | (flags & PTE_FLAGS_MASK);
@@ -184,264 +146,379 @@ impl PageTableEntry {
 // ─── Page Table ─────────────────────────────────────────────────────────────
 
 /// An Sv39 page table — 512 entries, 4 KiB, page-aligned.
-///
-/// Each entry is 8 bytes, totaling 4096 bytes per table.
-/// Page tables are allocated from physical frames via the PMA.
 #[repr(C, align(4096))]
 pub struct PageTable {
     entries: [PageTableEntry; 512],
 }
 
 impl PageTable {
-    /// Create a new, zeroed page table (all entries invalid).
+    /// Create a new, zeroed page table.
     pub fn new() -> Self {
-        PageTable {
-            entries: [PageTableEntry::empty(); 512],
-        }
+        PageTable { entries: [PageTableEntry::empty(); 512] }
     }
 
-    /// Get a reference to the entry at the given index.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `index >= 512`.
+    /// Get a reference to the entry at `index`.
     #[inline]
     pub fn entry(&self, index: usize) -> &PageTableEntry {
-        assert!(index < 512, "PageTable::entry: index {} out of range", index);
+        assert!(index < 512);
         &self.entries[index]
     }
 
-    /// Get a mutable reference to the entry at the given index.
+    /// Get a mutable reference to the entry at `index`.
     #[inline]
     pub fn entry_mut(&mut self, index: usize) -> &mut PageTableEntry {
-        assert!(index < 512, "PageTable::entry_mut: index {} out of range", index);
+        assert!(index < 512);
         &mut self.entries[index]
     }
 
-    /// Look up the physical address for a virtual address.
-    ///
-    /// Returns `Some(phys_addr)` if a valid mapping exists, or `None`
-    /// if the virtual address is not mapped.
-    ///
-    /// This performs a full 3-level page table walk.
+    /// Full 3-level page table walk to translate a virtual address.
     pub fn translate(&self, virt_addr: usize) -> Option<PhysAddr> {
         let vpn2 = Self::vpn2(virt_addr);
         let vpn1 = Self::vpn1(virt_addr);
         let vpn0 = Self::vpn0(virt_addr);
 
-        // Level 2 (root table — this)
         let e2 = self.entry(vpn2);
-        if !e2.is_valid() {
-            return None;
-        }
-
+        if !e2.is_valid() { return None; }
         if e2.is_leaf() {
-            // 1 GiB megapage at level 2
-            let phys = e2.phys_addr().0 + (virt_addr & 0x3FFF_FFFF);
-            return Some(PhysAddr(phys));
+            return Some(PhysAddr(e2.phys_addr().0 + (virt_addr & 0x3FFF_FFFF)));
         }
 
-        // Descend to level 1
-        let l1_table = unsafe { &*(e2.phys_addr().0 as *const PageTable) };
-        let e1 = l1_table.entry(vpn1);
-        if !e1.is_valid() {
-            return None;
-        }
-
+        let l1 = unsafe { &*(e2.phys_addr().0 as *const PageTable) };
+        let e1 = l1.entry(vpn1);
+        if !e1.is_valid() { return None; }
         if e1.is_leaf() {
-            // 1 GiB megapage at level 1 (2 MiB superpage in Sv39)
-            let phys = e1.phys_addr().0 + (virt_addr & 0x1F_FFFF);
-            return Some(PhysAddr(phys));
+            return Some(PhysAddr(e1.phys_addr().0 + (virt_addr & 0x1F_FFFF)));
         }
 
-        // Descend to level 0
-        let l0_table = unsafe { &*(e1.phys_addr().0 as *const PageTable) };
-        let e0 = l0_table.entry(vpn0);
-        if !e0.is_valid() {
-            return None;
-        }
-
-        // Level 0 leaf — 4 KiB page
-        let phys = e0.phys_addr().0 + (virt_addr & 0xFFF);
-        Some(PhysAddr(phys))
+        let l0 = unsafe { &*(e1.phys_addr().0 as *const PageTable) };
+        let e0 = l0.entry(vpn0);
+        if !e0.is_valid() { return None; }
+        Some(PhysAddr(e0.phys_addr().0 + (virt_addr & 0xFFF)))
     }
 
-    // ─── VPN extraction helpers ────────────────────────────────────────
+    // ─── VPN extraction ───────────────────────────────────────────────
 
-    /// Extract VPN[2] (bits 38:30) from a virtual address.
-    #[inline]
-    pub fn vpn2(virt: usize) -> usize {
-        (virt >> 30) & 0x1FF
-    }
+    #[inline] pub fn vpn2(virt: usize) -> usize { (virt >> 30) & 0x1FF }
+    #[inline] pub fn vpn1(virt: usize) -> usize { (virt >> 21) & 0x1FF }
+    #[inline] pub fn vpn0(virt: usize) -> usize { (virt >> 12) & 0x1FF }
 
-    /// Extract VPN[1] (bits 29:21) from a virtual address.
-    #[inline]
-    pub fn vpn1(virt: usize) -> usize {
-        (virt >> 21) & 0x1FF
-    }
-
-    /// Extract VPN[0] (bits 20:12) from a virtual address.
-    #[inline]
-    pub fn vpn0(virt: usize) -> usize {
-        (virt >> 12) & 0x1FF
-    }
-
-    /// Get the raw pointer to the page table as a physical address.
-    /// Used for writing to the `satp` CSR.
+    /// Physical address of this page table (for satp CSR).
     #[inline]
     pub fn phys_addr(&self) -> PhysAddr {
         PhysAddr(self as *const Self as usize)
     }
 }
 
-// ─── Virtual Memory Manager ─────────────────────────────────────────────────
+// ─── Address Space ──────────────────────────────────────────────────────────
 
-/// The global virtual memory manager.
+/// A process address space, backed by an Sv39 page table hierarchy.
 ///
-/// Holds the kernel's root page table and provides the API for
-/// creating address spaces and mapping virtual addresses.
+/// Each address space has:
+/// - A root page table (allocated from PMA)
+/// - Copies of kernel mappings (shared physical sub-tables)
+/// - Process-specific user-space mappings
+///
+/// # Lifecycle
+///
+/// 1. `AddressSpace::new_kernel()` — called once during boot
+/// 2. `AddressSpace::new_user()` — called when creating a process
+/// 3. `AddressSpace::map_page()` / `unmap_page()` — modify mappings
+/// 4. `AddressSpace::switch_to()` — activate via satp CSR
+/// 5. `AddressSpace::destroy()` — free all page table frames
+pub struct AddressSpace {
+    /// Physical address of the root page table (for satp CSR).
+    root_phys: PhysAddr,
+    /// Mutable pointer to the root table (for mapping operations).
+    root_table: *mut PageTable,
+    /// Number of sub-tables allocated (for diagnostics).
+    sub_table_count: usize,
+}
+
+// SAFETY: AddressSpace is only accessed through the VMM mutex or
+// during single-threaded boot. No concurrent access.
+unsafe impl Send for AddressSpace {}
+
+impl AddressSpace {
+    /// Create the kernel address space from an existing root table.
+    ///
+    /// # Safety
+    ///
+    /// `root` must point to a valid, initialized page table with
+    /// kernel mappings already set up.
+    unsafe fn from_root(root: &'static mut PageTable) -> Self {
+        let root_phys = root.phys_addr();
+        AddressSpace {
+            root_phys,
+            root_table: root as *mut PageTable,
+            sub_table_count: 0,
+        }
+    }
+
+    /// Create a new user address space by cloning kernel mappings.
+    ///
+    /// Allocates a fresh root page table and copies kernel-mapped
+    /// entries from the kernel address space. The resulting space
+    /// can be used for a process that shares the kernel's mappings
+    /// but has its own user-space pages.
+    ///
+    /// # Panics
+    ///
+    /// Panics if root page table frame allocation fails.
+    fn new_user() -> Self {
+        let root_frame = pma::alloc_frame()
+            .expect("AddressSpace::new_user: failed to allocate root page table");
+
+        // SAFETY: root_frame is freshly allocated, PMA guarantees exclusive ownership.
+        unsafe {
+            core::ptr::write_bytes(root_frame.0 as *mut u8, 0, PAGE_SIZE);
+        }
+
+        let root_ptr = root_frame.0 as *mut PageTable;
+
+        // Clone kernel mappings from the current address space.
+        // We read the kernel's root table entries and copy the kernel-region
+        // entries to the new space. This shares the physical sub-tables —
+        // the same physical page table frames are referenced by both spaces.
+        {
+            let current_root = current_address_space();
+            let current = unsafe { &*current_root.root_table };
+            let new = unsafe { &mut *root_ptr };
+
+            for i in 0..512 {
+                let virt = i << 30; // VPN[2] index → virtual address
+                if is_kernel_region(virt) {
+                    let entry = current.entry(i);
+                    if entry.is_valid() {
+                        new.entries[i] = *entry;
+                    }
+                }
+            }
+        }
+
+        AddressSpace {
+            root_phys: root_frame,
+            root_table: root_ptr,
+            sub_table_count: 0,
+        }
+    }
+
+    /// Get the physical address of the root page table.
+    ///
+    /// Used when writing to the `satp` CSR to switch address spaces.
+    pub fn root_phys(&self) -> PhysAddr {
+        self.root_phys
+    }
+
+    /// Get a reference to the root page table.
+    fn root(&self) -> &PageTable {
+        // SAFETY: root_table is always valid — set during construction
+        // and never freed while the AddressSpace exists.
+        unsafe { &*self.root_table }
+    }
+
+    /// Get a mutable reference to the root page table.
+    fn root_mut(&mut self) -> &mut PageTable {
+        // SAFETY: root_table is always valid. Mutable access is safe because
+        // operations are serialized through the VMM mutex.
+        unsafe { &mut *self.root_table }
+    }
+
+    /// Map a single 4 KiB page in this address space.
+    ///
+    /// Walks the 3-level hierarchy, allocating intermediate page table
+    /// frames from the PMA as needed.
+    pub fn map_page(&mut self, virt_addr: usize, phys_addr: PhysAddr, flags: u64) {
+        assert!(virt_addr % PAGE_SIZE == 0, "virt_addr not page-aligned");
+        assert!(phys_addr.is_page_aligned(), "phys_addr not page-aligned");
+
+        let root = self.root_mut();
+        let l1 = get_or_create_table(root, PageTable::vpn2(virt_addr), &mut self.sub_table_count);
+        let l0 = get_or_create_table(l1, PageTable::vpn1(virt_addr), &mut self.sub_table_count);
+
+        let entry = l0.entry_mut(PageTable::vpn0(virt_addr));
+        assert!(!entry.is_valid(),
+            "map_page: VPN[0]={} already mapped at virt {:#x}",
+            PageTable::vpn0(virt_addr), virt_addr
+        );
+        *entry = PageTableEntry::new(phys_addr, flags | PTE_V);
+    }
+
+    /// Unmap a single 4 KiB page.
+    ///
+    /// Sets the entry to invalid and flushes the TLB.
+    /// Does NOT free the underlying physical frame.
+    pub fn unmap_page(&mut self, virt_addr: usize) {
+        let root = self.root_mut();
+        let vpn2 = PageTable::vpn2(virt_addr);
+        let vpn1 = PageTable::vpn1(virt_addr);
+        let vpn0 = PageTable::vpn0(virt_addr);
+
+        let e2 = root.entry(vpn2);
+        assert!(e2.is_valid(), "unmap_page: level 2 invalid");
+        assert!(!e2.is_leaf(), "unmap_page: level 2 is megapage");
+
+        let l1 = unsafe { &mut *(e2.phys_addr().0 as *mut PageTable) };
+        let e1 = l1.entry(vpn1);
+        assert!(e1.is_valid(), "unmap_page: level 1 invalid");
+        assert!(!e1.is_leaf(), "unmap_page: level 1 is megapage");
+
+        let l0 = unsafe { &mut *(e1.phys_addr().0 as *mut PageTable) };
+        let e0 = l0.entry(vpn0);
+        assert!(e0.is_valid(), "unmap_page: page not mapped");
+
+        l0.entries[vpn0] = PageTableEntry::empty();
+
+        // Flush TLB for this address
+        unsafe {
+            core::arch::asm!("sfence.vma {}", in(reg) virt_addr);
+        }
+    }
+
+    /// Translate a virtual address to a physical address.
+    pub fn translate(&self, virt_addr: usize) -> Option<PhysAddr> {
+        self.root().translate(virt_addr)
+    }
+
+    /// Activate this address space by writing to the `satp` CSR.
+    ///
+    /// After this call, all memory access goes through this
+    /// address space's page tables.
+    ///
+    /// # Safety
+    ///
+    /// - Modifies the `satp` CSR
+    /// - Must only be called with valid page tables
+    /// - TLB is flushed before and after the switch
+    pub fn switch_to(&self) {
+        let ppn = self.root_phys.0 / PAGE_SIZE;
+        let satp_value: u64 = (8u64 << 60) | (ppn as u64); // Mode 8 = Sv39
+
+        unsafe {
+            core::arch::asm!("sfence.vma");
+            core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
+            core::arch::asm!("csrw satp, {}", in(reg) satp_value);
+            core::arch::asm!("sfence.vma");
+        }
+    }
+
+    /// Destroy this address space, freeing all allocated page table frames.
+    ///
+    /// Frees intermediate page table frames (levels 1 and 2) but:
+    /// - Does NOT free kernel-mapped sub-tables (shared with other spaces)
+    /// - Does NOT free leaf page frames (caller's responsibility)
+    ///
+    /// After this call, the `AddressSpace` must not be used.
+    ///
+    /// # Safety
+    ///
+    /// The root page table frame is freed. The caller must ensure
+    /// this address space is not currently active (switch away first).
+    pub unsafe fn destroy(&mut self) {
+        let root = self.root_mut();
+        free_page_tables_recursive(root, 2);
+        // Free the root frame itself
+        pma::free_frame(self.root_phys);
+    }
+}
+
+// ─── Kernel VMM State ───────────────────────────────────────────────────────
+
+/// Global VMM state. Tracks the kernel address space and the
+/// currently active address space.
 static VMM: Mutex<KernelVmm> = Mutex::new(KernelVmm::new());
 
-/// Kernel VMM state. Holds the root page table.
 struct KernelVmm {
-    root_table: &'static mut PageTable,
+    /// The kernel's address space (never destroyed).
+    kernel_space: AddressSpace,
+    /// Pointer to the currently active address space.
+    /// Points to either `kernel_space` or a heap-allocated process space.
+    current_space: *const AddressSpace,
 }
 
 impl KernelVmm {
     const fn new() -> Self {
         KernelVmm {
-            // SAFETY: This is a placeholder. The real root table is set during init().
-            // Using a dangling pointer here is safe because VMM is never accessed
-            // before init() replaces this with a valid pointer.
-            root_table: unsafe { &mut *(0x1000 as *mut PageTable) },
+            // SAFETY: placeholder — replaced during init()
+            kernel_space: AddressSpace {
+                root_phys: PhysAddr(0),
+                root_table: core::ptr::null_mut(),
+                sub_table_count: 0,
+            },
+            current_space: core::ptr::null(),
         }
     }
+}
 
-    /// Replace the root table with a newly allocated one.
-    ///
-    /// # Safety
-    ///
-    /// `table` must point to a valid, allocated `PageTable`.
-    unsafe fn set_root(&mut self, table: &'static mut PageTable) {
-        self.root_table = table;
-    }
+/// Get a reference to the currently active address space.
+fn current_address_space() -> &'static AddressSpace {
+    // SAFETY: current_space is always valid after VMM init.
+    // It points to either the static kernel_space or a heap-allocated space
+    // that is owned by the VMM and not freed while in use.
+    unsafe { &*VMM.lock().current_space }
 }
 
 // ─── Initialization ─────────────────────────────────────────────────────────
 
 /// Initialize the virtual memory subsystem.
 ///
-/// This function:
-/// 1. Allocates a root page table frame from the PMA
-/// 2. Identity-maps the lower 512 MiB of physical RAM (covers MMIO devices)
-/// 3. Identity-maps the full kernel physical region (code/data/heap)
-/// 4. Enables Sv39 paging by writing the `satp` CSR
-///
-/// After this function returns, all memory access goes through the page
-/// tables. Since we use identity mapping, the kernel continues executing
-/// at the same physical addresses — no relocation needed.
-///
-/// # Panics
-///
-/// Panics if page table frame allocation fails or the root table
-/// address is not properly aligned.
+/// 1. Allocates root page table for kernel
+/// 2. Identity-maps MMIO (lower 512 MiB) and kernel region
+/// 3. Enables Sv39 paging via satp CSR
+/// 4. Sets up kernel AddressSpace wrapper
 ///
 /// # Safety
 ///
-/// This modifies the `satp` CSR to enable hardware page translation.
-/// Must be called exactly once, after PMA is initialized, before any
-/// code that depends on virtual memory.
+/// Modifies `satp` CSR. Called once during boot.
 pub fn init() {
     // ─── 1. Allocate root page table ──────────────────────────────────
-    let root_frame = pma::alloc_frame().expect("vmm: failed to allocate root page table frame");
+    let root_frame = pma::alloc_frame()
+        .expect("vmm: failed to allocate root page table frame");
 
-    // SAFETY: root_frame is a freshly allocated, page-aligned physical address.
-    // The PMA guarantees the frame is not used by anyone else.
-    // We cast it to a mutable PageTable reference for initialization.
     let root_ptr = root_frame.0 as *mut PageTable;
-    // SAFETY: root_ptr points to a valid, allocated frame of PAGE_SIZE bytes.
-    // We zero it and initialize it as a PageTable. After this, the static
-    // reference keeps it alive for the kernel's lifetime.
     let root_table: &'static mut PageTable = unsafe {
         core::ptr::write_bytes(root_ptr, 0, 1);
         &mut *root_ptr
     };
 
-    // Store root table in the global VMM
-    // SAFETY: VMM is initialized exactly once during boot. No concurrent access.
-    unsafe {
-        VMM.lock().set_root(root_table);
-    }
-
     crate::println!("  [vmm] Sv39 page tables allocated at {}", root_frame);
 
-    // ─── 2. Identity-map lower 512 MiB (MMIO coverage) ───────────────
-    //
-    // This maps virtual0x0000_0000_0000_0000 → physical0x0000_0000_0000_0000
-    // for the first 512 MiB of physical address space.
-    //
-    // This covers:
-    //   0x0000_0000 - 0x0000_FFFF : Firmware/ROM (64 KiB)
-    //   0x0010_0000 - 0x0010_FFFF : UART NS16550A (64 KiB)
-    //   0x0200_0000 - 0x0201_FFFF : CLINT timer/IPI (128 KiB)
-    //   0x0C00_0000 - 0x0C0F_FFFF : PLIC (first 1 MiB)
-    //
-    // Without this, the UART would be inaccessible after paging is enabled,
-    // and the kernel would be unable to print.
+    // ─── 2. Identity-map lower 512 MiB (MMIO) ────────────────────────
     {
-        let mut vmm = VMM.lock();
-        let root = vmm.root_table;
-
-        let mmio_virt = 0usize;
-        let mmio_phys = PhysAddr(0);
-        map_megapage(root, mmio_virt, mmio_phys, PTE_RW | PTE_G);
+        map_megapage(root_table, 0, PhysAddr(0), PTE_RW | PTE_G);
         crate::println!("  [vmm] Identity-mapped lower 512 MiB (MMIO region)");
     }
 
-    // ─── 3. Identity-map kernel physical region ───────────────────────
-    //
-    // This maps virtual 0x8000_0000 → physical 0x8000_0000 for the full
-    // 256 MiB RAM region. This covers:
-    //   Kernel .text, .rodata, .data, .stack, .bss
-    //   Kernel heap
-    //   Free frames
-    //
-    // After this mapping, the kernel continues executing at the same
-    // physical addresses it was using before paging was enabled.
+    // ─── 3. Identity-map kernel region ────────────────────────────────
     {
-        let mut vmm = VMM.lock();
-        let root = vmm.root_table;
-        let ram_size = RAM_SIZE;
         let ram_phys = PhysAddr(RAM_START);
-        map_region(root, RAM_START, ram_phys, ram_size, PTE_RW | PTE_G);
+        map_region(root_table, RAM_START, ram_phys, RAM_SIZE, PTE_RW | PTE_G);
         crate::println!(
             "  [vmm] Identity-mapped {} MiB kernel region ({:#x} - {:#x})",
-            ram_size / (1024 * 1024),
-            RAM_START,
-            RAM_START + ram_size,
+            RAM_SIZE / (1024 * 1024), RAM_START, RAM_START + RAM_SIZE,
         );
     }
 
     // ─── 4. Enable Sv39 paging ────────────────────────────────────────
-    //
-    // Write the satp CSR to activate hardware page translation.
-    // The SFENCE.VMA instruction flushes any stale TLB entries.
-    //
-    // After this point, all memory access goes through the page tables.
-    // Since we used identity mapping, the kernel code, data, and stack
-    // continue to be accessible at their current physical addresses.
     enable_paging(root_frame);
-
     crate::println!("  [vmm] Sv39 paging enabled — virtual memory active");
 
-    // ─── 5. Verify mapping works ──────────────────────────────────────
+    // ─── 5. Set up kernel AddressSpace ────────────────────────────────
     //
-    // Sanity-check that the UART is still accessible (proves the
-    // identity mapping works).
+    // After paging is enabled, we can safely create the AddressSpace wrapper.
+    // The kernel space uses the same root table we just set up.
+    let kernel_space = unsafe { AddressSpace::from_root(root_table) };
+
     {
-        let root = VMM.lock().root_table;
+        let mut vmm = VMM.lock();
+        vmm.kernel_space = kernel_space;
+        vmm.current_space = &vmm.kernel_space as *const AddressSpace;
+    }
+
+    // ─── 6. Verify ────────────────────────────────────────────────────
+    {
+        let cs = current_address_space();
         let uart_virt = 0x0010_0000usize;
-        match root.translate(uart_virt) {
+        match cs.translate(uart_virt) {
             Some(phys) => {
                 crate::println!("  [vmm] Verification: UART {} → {}", uart_virt, phys);
             }
@@ -455,137 +532,73 @@ pub fn init() {
 // ─── Mapping Helpers ────────────────────────────────────────────────────────
 
 /// Map a 1 GiB megapage at VPN[2] level.
-///
-/// This maps `virt_addr` (must be 1 GiB aligned) to `phys_addr`
-/// using a single level-2 page table entry.
-///
-/// # Panics
-///
-/// Panics if `virt_addr` is not 1 GiB aligned.
 fn map_megapage(table: &mut PageTable, virt_addr: usize, phys_addr: PhysAddr, flags: u64) {
-    assert!(
-        virt_addr & 0x3FFF_FFFF == 0,
-        "map_megapage: virt_addr {:#x} is not 1 GiB aligned",
-        virt_addr
-    );
+    assert!(virt_addr & 0x3FFF_FFFF == 0,
+        "map_megapage: virt_addr {:#x} not 1 GiB aligned", virt_addr);
     let vpn2 = PageTable::vpn2(virt_addr);
     let entry = table.entry_mut(vpn2);
-    assert!(
-        !entry.is_valid(),
-        "map_megapage: VPN[2] entry {} already in use",
-        vpn2
-    );
+    assert!(!entry.is_valid(), "map_megapage: VPN[2] entry {} already in use", vpn2);
     *entry = PageTableEntry::new(phys_addr, flags | PTE_V);
 }
 
-/// Map a single 4 KiB page.
-///
-/// Walks (or allocates) the 3-level page table hierarchy and maps
-/// `virt_addr` to `phys_addr` with the given flags.
-///
-/// # Panics
-///
-/// Panics if a page table frame allocation fails.
+/// Map a single 4 KiB page through the 3-level hierarchy.
 fn map_page(table: &mut PageTable, virt_addr: usize, phys_addr: PhysAddr, flags: u64) {
-    assert!(virt_addr % PAGE_SIZE == 0, "map_page: virt_addr not page-aligned");
-    assert!(phys_addr.is_page_aligned(), "map_page: phys_addr not page-aligned");
+    assert!(virt_addr % PAGE_SIZE == 0);
+    assert!(phys_addr.is_page_aligned());
 
     let vpn2 = PageTable::vpn2(virt_addr);
     let vpn1 = PageTable::vpn1(virt_addr);
     let vpn0 = PageTable::vpn0(virt_addr);
 
-    // Level 2 → Level 1
-    let l1_table = get_or_create_table(table, vpn2);
-    // Level 1 → Level 0
-    let l0_table = get_or_create_table(l1_table, vpn1);
-    // Level 0: set the leaf entry
-    let entry = l0_table.entry_mut(vpn0);
-    assert!(
-        !entry.is_valid(),
-        "map_page: page at VPN[0]={} already mapped",
-        vpn0
-    );
+    let l1 = get_or_create_table(table, vpn2, &mut 0);
+    let l0 = get_or_create_table(l1, vpn1, &mut 0);
+    let entry = l0.entry_mut(vpn0);
+    assert!(!entry.is_valid(), "map_page: VPN[0]={} already mapped", vpn0);
     *entry = PageTableEntry::new(phys_addr, flags | PTE_V);
 }
 
 /// Map a range of 4 KiB pages.
-///
-/// Maps `count` consecutive pages starting at `virt_addr` to `phys_addr`.
-/// Each page is mapped individually through the 3-level hierarchy.
-///
-/// # Panics
-///
-/// Panics if any page table frame allocation fails, or if any page
-/// in the range is already mapped.
-fn map_region(
-    table: &mut PageTable,
-    virt_addr: usize,
-    phys_addr: PhysAddr,
-    size: usize,
-    flags: u64,
-) {
-    assert!(virt_addr % PAGE_SIZE == 0, "map_region: virt_addr not page-aligned");
-    assert!(phys_addr.is_page_aligned(), "map_region: phys_addr not page-aligned");
-    assert!(size % PAGE_SIZE == 0, "map_region: size not page-aligned");
+fn map_region(table: &mut PageTable, virt_addr: usize, phys_addr: PhysAddr, size: usize, flags: u64) {
+    assert!(virt_addr % PAGE_SIZE == 0);
+    assert!(phys_addr.is_page_aligned());
+    assert!(size % PAGE_SIZE == 0);
 
-    let pages = size / PAGE_SIZE;
-    for i in 0..pages {
+    for i in 0..(size / PAGE_SIZE) {
         let v = virt_addr + i * PAGE_SIZE;
         let p = PhysAddr(phys_addr.0 + i * PAGE_SIZE);
         map_page(table, v, p, flags);
     }
 }
 
-/// Get or create a page table at the given VPN[2] or VPN[1] index.
+/// Get or create a sub-page table at the given index.
 ///
-/// If the entry at `parent_table[vpn_index]` is valid and non-leaf,
-/// returns a mutable reference to the next-level table.
+/// If the parent entry is valid and non-leaf, returns the existing sub-table.
+/// If invalid, allocates a new frame, links it, and returns the new table.
 ///
-/// If the entry is invalid, allocates a new page table frame from the
-/// PMA, links it into the parent, and returns a mutable reference.
-///
-/// # Panics
-///
-/// Panics if the entry is already a leaf (megapage) or if frame
-/// allocation fails.
+/// `sub_table_count` is incremented for each newly allocated frame (for diagnostics).
 fn get_or_create_table<'a>(
-    parent_table: &'a mut PageTable,
+    parent: &'a mut PageTable,
     vpn_index: usize,
+    sub_table_count: &mut usize,
 ) -> &'a mut PageTable {
-    let entry = parent_table.entry(vpn_index);
+    let entry = parent.entry(vpn_index);
 
     if entry.is_valid() {
-        // Entry exists — it should be a non-leaf pointing to a sub-table
-        assert!(
-            !entry.is_leaf(),
-            "get_or_create_table: entry at VPN index {} is a leaf (megapage)",
-            vpn_index
-        );
+        assert!(!entry.is_leaf(),
+            "get_or_create_table: entry at VPN index {} is a megapage", vpn_index);
         let table_phys = entry.phys_addr().0;
-        // SAFETY: entry.phys_addr() points to a valid, previously allocated
-        // page table frame. We cast it to a mutable reference because we
-        // are the sole owner of this address space during initialization.
+        // SAFETY: entry points to a valid, previously allocated page table frame.
         unsafe { &mut *(table_phys as *mut PageTable) }
     } else {
-        // Allocate a new page table frame
         let frame = pma::alloc_frame()
             .expect("get_or_create_table: failed to allocate page table frame");
+        // SAFETY: frame is freshly allocated by PMA, guaranteed exclusive.
+        unsafe { core::ptr::write_bytes(frame.0 as *mut u8, 0, PAGE_SIZE); }
 
-        // Zero the new table
-        // SAFETY: frame is a freshly allocated, page-aligned physical address.
-        // The PMA guarantees it's not used by anyone else.
-        unsafe {
-            core::ptr::write_bytes(frame.0 as *mut u8, 0, PAGE_SIZE);
-        }
+        *parent.entry_mut(vpn_index) = PageTableEntry::new(frame, PTE_V);
+        *sub_table_count += 1;
 
-        // Link it into the parent
-        let parent_entry = parent_table.entry_mut(vpn_index);
-        // PPN is frame_number, flags are just valid (non-leaf: no R/W/X)
-        *parent_entry = PageTableEntry::new(frame, PTE_V);
-
-        // SAFETY: frame is a valid, allocated page table frame.
-        // We return a mutable reference to it. This is safe because
-        // we just allocated it and no one else has a reference.
+        // SAFETY: frame is valid, freshly allocated, exclusively owned.
         unsafe { &mut *(frame.0 as *mut PageTable) }
     }
 }
@@ -593,128 +606,150 @@ fn get_or_create_table<'a>(
 // ─── Paging Control ─────────────────────────────────────────────────────────
 
 /// Enable Sv39 paging by writing the `satp` CSR.
+fn enable_paging(root_table_phys: PhysAddr) {
+    let ppn = root_table_phys.0 / PAGE_SIZE;
+    let satp_value: u64 = (8u64 << 60) | (ppn as u64);
+
+    unsafe {
+        core::arch::asm!("sfence.vma");
+        core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
+        core::arch::asm!("csrw satp, {}", in(reg) satp_value);
+        core::arch::asm!("sfence.vma");
+    }
+}
+
+// ─── Page Table Cleanup ─────────────────────────────────────────────────────
+
+/// Recursively free page table frames, preserving kernel-mapped tables.
 ///
-/// This activates hardware page translation. The `sfence.vma` instruction
-/// flushes any stale TLB entries before the switch.
+/// Walks the page table at the given level. For each valid non-leaf entry:
+/// - If the virtual address range is in the kernel region, the sub-table
+///   is shared and must NOT be freed.
+/// - Otherwise, recursively descend and free the sub-table frame.
 ///
 /// # Safety
 ///
-/// - Modifies the `satp` CSR (Supervisor Address Translation and Protection)
-/// - Must only be called after the page tables are correctly set up
-/// - Must only be called once during boot
-/// - After this call, all memory access goes through the page tables
-/// - The identity mapping ensures the kernel continues executing seamlessly
-fn enable_paging(root_table_phys: PhysAddr) {
-    // Compute the satp value:
-    //   Bits [63:60] = 0 (reserved)
-    //   Bits [59:44] = 0 (ASID — no address space ID yet)
-    //   Bits [43:0]  = PPN of root page table (root_table_phys / PAGE_SIZE)
-    let ppn = root_table_phys.0 / PAGE_SIZE;
-    let satp_value: u64 = (8u64 << 60) | (ppn as u64); // Mode 8 = Sv39
+/// The caller must ensure `table` is a valid page table and that
+/// this address space is not currently active (switched away first).
+unsafe fn free_page_tables_recursive(table: &mut PageTable, level: usize) {
+    if level == 0 { return; } // Don't free the root (caller does that)
 
-    unsafe {
-        // Flush TLB — ensures no stale translations persist
-        core::arch::asm!("sfence.vma");
+    for i in 0..512 {
+        let entry = &table.entries[i];
+        if !entry.is_valid() || entry.is_leaf() { continue; }
 
-        // Compiler fence — ensure all page table writes are committed
-        // before we enable paging. Without this, the compiler could
-        // reorder writes and we'd enable paging before tables are ready.
-        core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
+        let virt = i << (level * 9 + 12);
 
-        // Enable Sv39 paging
-        core::arch::asm!("csrw satp, {}", in(reg) satp_value);
+        // Don't free kernel-mapped sub-tables
+        if is_kernel_region(virt) { continue; }
 
-        // Flush TLB again — the previous sfence was before satp write,
-        // this one ensures the new mappings take effect immediately.
-        core::arch::asm!("sfence.vma");
+        let sub_table_phys = entry.phys_addr().0;
+        let sub_table = &mut *(sub_table_phys as *mut PageTable);
+
+        // Recurse if this is a mid-level table (not level 0)
+        if level > 1 {
+            free_page_tables_recursive(sub_table, level - 1);
+        }
+
+        // Free the sub-table frame
+        pma::free_frame(sub_table_phys as PhysAddr);
+
+        // Invalidate the parent entry
+        table.entries[i] = PageTableEntry::empty();
     }
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
-/// Map a single 4 KiB page in the kernel's address space.
+/// Create a new user address space.
 ///
-/// # Arguments
-///
-/// * `virt_addr` — Virtual address to map (must be page-aligned).
-/// * `phys_addr` — Physical address to map to (must be page-aligned).
-/// * `flags` — Page table entry flags (PTE_R, PTE_W, PTE_X, etc.).
+/// Allocates a root page table and clones kernel mappings.
+/// The returned space can be used for a new process.
 ///
 /// # Panics
 ///
-/// Panics if the page is already mapped or frame allocation fails.
-pub fn map_page_kernel(virt_addr: usize, phys_addr: PhysAddr, flags: u64) {
+/// Panics if root page table allocation fails.
+pub fn create_address_space() -> AddressSpace {
+    AddressSpace::new_user()
+}
+
+/// Switch to a different address space.
+///
+/// Writes the address space's root table PPN to the `satp` CSR,
+/// activating the new page tables for all subsequent memory access.
+///
+/// # Safety
+///
+/// - Modifies the `satp` CSR
+/// - The target address space must have valid page tables
+/// - The current address space must remain valid (not destroyed)
+pub fn switch_address_space(space: &AddressSpace) {
+    space.switch_to();
+    // Update the VMM's current_space pointer
+    // SAFETY: VMM is accessed through the mutex. The space pointer
+    // remains valid for the lifetime of the AddressSpace.
     let mut vmm = VMM.lock();
-    map_page(vmm.root_table, virt_addr, phys_addr, flags);
+    vmm.current_space = space as *const AddressSpace;
 }
 
-/// Unmap a single 4 KiB page in the kernel's address space.
+/// Get the kernel's address space (read-only reference).
+pub fn kernel_address_space() -> &'static AddressSpace {
+    let vmm = VMM.lock();
+    // SAFETY: kernel_space lives inside the static VMM and is never moved.
+    unsafe { &*core::ptr::addr_of!(vmm.kernel_space) }
+}
+
+/// Get the currently active address space.
+pub fn current_address_space_ref() -> &'static AddressSpace {
+    current_address_space()
+}
+
+/// Get the physical address of the currently active page table root.
 ///
-/// Sets the entry to invalid. Does NOT free the underlying physical frame.
-///
-/// # Panics
-///
-/// Panics if the page is not currently mapped.
-pub fn unmap_page_kernel(virt_addr: usize) {
+/// Used for diagnostics and when constructing the satp CSR value.
+pub fn active_page_table_phys() -> PhysAddr {
+    current_address_space().root_phys()
+}
+
+/// Map a page in the currently active address space.
+pub fn map_page_current(virt_addr: usize, phys_addr: PhysAddr, flags: u64) {
     let mut vmm = VMM.lock();
-    let root = vmm.root_table;
-
-    let vpn2 = PageTable::vpn2(virt_addr);
-    let vpn1 = PageTable::vpn1(virt_addr);
-    let vpn0 = PageTable::vpn0(virt_addr);
-
-    let e2 = &root.entries[vpn2];
-    assert!(e2.is_valid(), "unmap_page_kernel: level 2 entry invalid");
-    assert!(!e2.is_leaf(), "unmap_page_kernel: level 2 is a megapage");
-
-    let l1 = unsafe { &mut *(e2.phys_addr().0 as *mut PageTable) };
-    let e1 = &l1.entries[vpn1];
-    assert!(e1.is_valid(), "unmap_page_kernel: level 1 entry invalid");
-    assert!(!e1.is_leaf(), "unmap_page_kernel: level 1 is a megapage");
-
-    let l0 = unsafe { &mut *(e1.phys_addr().0 as *mut PageTable) };
-    let e0 = &l0.entries[vpn0];
-    assert!(e0.is_valid(), "unmap_page_kernel: page not mapped");
-
-    // Invalidate the entry
-    l0.entries[vpn0] = PageTableEntry::empty();
-
-    // Flush TLB for this address
-    unsafe {
-        core::arch::asm!(
-            "sfence.vma {}",
-            in(reg) virt_addr,
-        );
-    }
+    let space = unsafe { &mut *vmm.current_space as *mut AddressSpace };
+    // SAFETY: current_space points to a valid AddressSpace.
+    // We need &mut but the VMM mutex ensures exclusive access.
+    unsafe { (*space).map_page(virt_addr, phys_addr, flags); }
 }
 
-/// Translate a virtual address to a physical address.
-///
-/// Performs a full 3-level page table walk on the kernel's root table.
-///
-/// Returns `Some(phys_addr)` if the mapping exists, `None` otherwise.
-pub fn translate(virt_addr: usize) -> Option<PhysAddr> {
-    let vmm = VMM.lock();
-    vmm.root_table.translate(virt_addr)
+/// Unmap a page in the currently active address space.
+pub fn unmap_page_current(virt_addr: usize) {
+    let mut vmm = VMM.lock();
+    let space = unsafe { &mut *vmm.current_space as *mut AddressSpace };
+    unsafe { (*space).unmap_page(virt_addr); }
 }
 
-/// Get the physical address of the kernel's root page table.
-///
-/// Used when switching address spaces (writing to `satp`).
-pub fn kernel_page_table_phys() -> PhysAddr {
-    let vmm = VMM.lock();
-    vmm.root_table.phys_addr()
+/// Translate a virtual address in the currently active address space.
+pub fn translate_current(virt_addr: usize) -> Option<PhysAddr> {
+    current_address_space().translate(virt_addr)
 }
 
-/// Print page table statistics for diagnostics.
+/// Destroy an address space, freeing all non-kernel page table frames.
+///
+/// # Safety
+///
+/// The address space must NOT be the currently active one.
+/// Switch to another space before destroying.
+pub unsafe fn destroy_address_space(space: &mut AddressSpace) {
+    space.destroy();
+}
+
+/// Print page table statistics for the currently active address space.
 pub fn print_stats() {
-    let vmm = VMM.lock();
-    let root = vmm.root_table;
-    let root_phys = root.phys_addr();
+    let cs = current_address_space();
+    let root = cs.root();
+    let root_phys = cs.root_phys();
 
-    crate::println!("  [vmm] Root page table at {}", root_phys);
+    crate::println!("  [vmm] Active page table at {}", root_phys);
 
-    // Count valid entries at each level
     let mut l2_count = 0usize;
     let mut l1_count = 0usize;
     let mut l0_count = 0usize;
@@ -724,19 +759,15 @@ pub fn print_stats() {
         if e2.is_valid() {
             l2_count += 1;
             if !e2.is_leaf() {
-                // Walk level 1
                 let l1 = unsafe { &*(e2.phys_addr().0 as *const PageTable) };
                 for j in 0..512 {
                     let e1 = l1.entry(j);
                     if e1.is_valid() {
                         l1_count += 1;
                         if !e1.is_leaf() {
-                            // Walk level 0
                             let l0 = unsafe { &*(e1.phys_addr().0 as *const PageTable) };
                             for k in 0..512 {
-                                if l0.entry(k).is_valid() {
-                                    l0_count += 1;
-                                }
+                                if l0.entry(k).is_valid() { l0_count += 1; }
                             }
                         }
                     }
@@ -749,9 +780,8 @@ pub fn print_stats() {
     crate::println!("  [vmm]   Level 1 entries: {}", l1_count);
     crate::println!("  [vmm]   Level 0 entries: {}", l0_count);
     crate::println!(
-        "  [vmm]   Total mapped pages: {} ({} MiB)",
-        l0_count,
-        l0_count * 4 // KiB → MiB? No: l0_count * 4096 / (1024*1024)
+        "  [vmm]   Sub-tables allocated: {}",
+        cs.sub_table_count
     );
 }
 
@@ -766,10 +796,7 @@ mod tests {
         let addr = PhysAddr(0x8000_1000);
         let flags = PTE_V | PTE_R | PTE_W;
         let pte = PageTableEntry::new(addr, flags);
-
         assert!(pte.is_valid());
-        assert!(!pte.is_leaf()); // R+W without X → non-leaf? Actually R|W is leaf.
-        // Wait — is_leaf checks if ANY of R/W/X is set. So R|W IS a leaf.
         assert!(pte.is_leaf());
         assert_eq!(pte.phys_addr(), addr);
         assert_eq!(pte.flags(), flags);
@@ -784,17 +811,23 @@ mod tests {
 
     #[test]
     fn test_vpn_extraction() {
-        // Virtual address 0xFFFF_FFC0_8000_1000
         let va = 0xFFFF_FFC0_8000_1000usize;
-        assert_eq!(PageTable::vpn2(va), 0x1FD); // bits 38:30
-        assert_eq!(PageTable::vpn1(va), 0x000); // bits 29:21
-        assert_eq!(PageTable::vpn0(va), 0x000); // bits 20:12
+        assert_eq!(PageTable::vpn2(va), 0x1FD);
+        assert_eq!(PageTable::vpn1(va), 0x000);
+        assert_eq!(PageTable::vpn0(va), 0x000);
 
-        // Virtual address 0x8000_0000
         let va2 = 0x8000_0000usize;
         assert_eq!(PageTable::vpn2(va2), 2);
         assert_eq!(PageTable::vpn1(va2), 0);
         assert_eq!(PageTable::vpn0(va2), 0);
+    }
+
+    #[test]
+    fn test_is_kernel_region() {
+        assert!(is_kernel_region(0x8000_0000));
+        assert!(is_kernel_region(0x8800_0000 - 1));
+        assert!(!is_kernel_region(0x7FFF_FFFF));
+        assert!(!is_kernel_region(0x8800_0000));
     }
 
     #[test]

@@ -79,7 +79,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 | Process table | **MISSING** | No table, no PCB, no process states. |
 | Process lifecycle (create/run/exit/wait) | **MISSING** | |
 | Parent/child relationships | **MISSING** | |
-| Process isolation | **MISSING** | Kernel uses Sv39 but no per-process address spaces. All code runs in kernel address space. |
+| Process isolation | **PARTIALLY IMPLEMENTED** | Per-process AddressSpace API with create/switch/destroy. Kernel mappings cloned to each space. No S-mode/U-mode split yet. |
 | Resource accounting | **MISSING** | |
 | Process groups | **MISSING** | |
 

@@ -338,7 +338,9 @@ impl Shell {
         println!("]");
 
         // Virtual memory stats
+        let active_pt = crate::vmm::active_page_table_phys();
         println!("  Virtual Memory:  Sv39 (identity-mapped kernel)");
+        println!("  Active page table: {}", active_pt);
         crate::vmm::print_stats();
         0
     }
@@ -446,8 +448,8 @@ impl Shell {
         println!("  Maintainer : Tamheed Nazir");
         println!("");
         println!("  Status: Early prototype — boots, runs shell, Sv39 active.");
-        println!("  Virtual memory: Sv39 identity-mapped (no user/kernel split yet)");
-        println!("  No process isolation, no scheduler,");
+        println!("  Virtual memory: Sv39, per-process address spaces available");
+        println!("  No user/kernel mode split, no scheduler,");
         println!("  no persistent storage, no networking, no GUI.");
         println!("");
         println!("  \"Digital independence for every Indian.\"");

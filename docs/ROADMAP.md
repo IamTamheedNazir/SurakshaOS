@@ -62,13 +62,13 @@
 - [x] **Physical frame allocator** — bitmap allocator for physical frames (kernel/src/pma.rs)
 - [x] **Sv39 page table support** — create, map, unmap, permissions (kernel/src/vmm.rs)
 - [x] **Kernel address space** — identity-mapped for boot (kernel + MMIO), higher-half TODO
-- [ ] **User address spaces** — isolated per-process (next step after M1 completion)
+- [x] **User address spaces** — per-process page tables with kernel mapping clone (AddressSpace API)
 - [ ] **Page fault handler** — proper classification (page faults classified in arch.rs, not yet handling VM faults)
 - [ ] **Memory map discovery** — parse DTB memory node
 
 ### P0 — Process Model
 
-- [ ] **Process Control Block (PCB)** — full process structure
+- [ ] **Process Control Block (PCB)** — full process structure with AddressSpace field
 - [ ] **Process states** — Created, Ready, Running, Waiting, Zombie, Dead
 - [ ] **Process creation** — fork/exec equivalent
 - [ ] **Process destruction** — exit, wait, cleanup
@@ -119,7 +119,7 @@
 - [ ] **Move to S-mode kernel** — kernel runs in supervisor mode
 - [ ] **User processes run in U-mode** — unprivileged
 - [ ] **Trap delegation** — S-mode handles traps from U-mode
-- [ ] **User pointer validation** — never trust user addresses
+- [ ] **User pointer validation** — never trust user addresses (requires S-mode)
 
 ---
 
