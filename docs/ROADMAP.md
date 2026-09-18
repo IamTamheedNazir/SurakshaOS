@@ -59,7 +59,7 @@
 
 ### P0 — Kernel Memory
 
-- [ ] **Physical frame allocator** — bitmap or buddy allocator for 64-bit physical address space
+- [x] **Physical frame allocator** — bitmap allocator for physical frames (kernel/src/pma.rs)
 - [ ] **Sv39 page table support** — create, map, unmap, permissions
 - [ ] **Kernel address space** — separate kernel virtual memory
 - [ ] **User address spaces** — isolated per-process

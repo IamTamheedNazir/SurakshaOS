@@ -33,6 +33,7 @@
 - **Impact:** Cannot isolate processes. Any process can read/write kernel memory.
 - **Fix:** Implement Sv39 page tables with per-process address spaces.
 - **Severity:** CRITICAL
+- **Partial progress:** Physical frame allocator (PMA) implemented in `kernel/src/pma.rs`. Bitmap-based, manages 256 MiB / 65536 frames. Next step: Sv39 page tables.
 
 ### TD-005: Simulated Commands Print Fake Success
 - **File:** `kernel/src/shell.rs` (lines `cmd_captest`, `cmd_pqtest`)

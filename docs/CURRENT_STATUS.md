@@ -45,7 +45,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 | `#[global_allocator]` | **IMPLEMENTED** | Rust global allocator wired up. |
 | `#[alloc_error_handler]` | **IMPLEMENTED** | Panics on OOM. |
 | Heap stats (`heap_used`/`heap_total`) | **IMPLEMENTED** | Exposed via allocator API. |
-| Physical memory manager | **MISSING** | No frame allocator. No memory map parsing. |
+| Physical memory manager | **IMPLEMENTED** | Bitmap-based frame allocator in `kernel/src/pma.rs`. Manages 256 MiB / 65536 frames. Marks kernel region as reserved. |
 | Virtual memory / page tables | **MISSING** | No Sv39/Sv48. No address spaces. |
 | Memory regions / protections | **MISSING** | Everything runs in a flat address space. |
 | Guard pages | **MISSING** | |
@@ -59,9 +59,9 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 |-----------|--------|-------|
 | Trap vector setup (`mtvec`) | **PARTIALLY IMPLEMENTED** | Sets `mtvec` to `_trap_entry`. Works for timer interrupts. |
 | Timer interrupt (CLINT) | **PARTIALLY IMPLEMENTED** | Arms `mtimecmp`, handles timer tick. `TICK_COUNT` incremented. |
-| Trap context save/restore | **UNSAFE** | Saves only 16 of 33 general registers. Missing: `s0-s11`, `gp`, `tp`, `mepc`, `mstatus`, `mcause`, `mtval`. Will corrupt state on any real context switch. |
-| Exception handling | **STUB** | Unknown exceptions advance `mepc+4` blindly. Page faults, access faults, illegal instructions all treated the same. |
-| `mepc` advancement | **UNSAFE** | Advancing `mepc+4` for synchronous exceptions is wrong for compressed instructions (2 bytes), illegal memory accesses, etc. |
+| Trap context save/restore | **IMPLEMENTED** | Saves ALL 31 general-purpose registers + mepc/mstatus/mcause. `TrapContext` struct matches assembly layout. |
+| Exception handling | **PARTIALLY IMPLEMENTED** | All exception codes classified (0-15+). Proper handling per type. Page faults advance mepc+4 (correct for now, will change with VM). |
+| `mepc` advancement | **PARTIALLY IMPLEMENTED** | Classifies exception types. Advances mepc+4 for most exceptions (correct for 4-byte instructions). Compressed instruction detection TODO. |
 | CSR helpers | **MISSING** | No abstraction layer for CSR reads/writes. |
 | S-mode support | **MISSING** | Everything runs in M-mode. No S/U mode transition. |
 | Interrupt controller (PLIC) | **MISSING** | No PLIC initialization. External interrupts unhandled. |
@@ -123,7 +123,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 | Command parsing | **PARTIALLY IMPLEMENTED** | Simple whitespace splitting. No quoting, no escaping, no globbing. |
 | Built-in commands | **PARTIALLY IMPLEMENTED** | `ls`, `cd`, `pwd`, `cat`, `echo`, `mkdir`, `rm`, `touch`, `write`, `ps`, `mem`, `uptime`, `uname`, `env`, `export`, `history`, `clear`, `reboot`, `halt`, `about`. Functional against in-memory VFS. |
 | `ps` command | **SIMULATED** | Prints hardcoded process table. No real processes exist. |
-| `mem` command | **PARTIALLY IMPLEMENTED** | Reports heap usage (real). |
+| `mem` command | **IMPLEMENTED** | Reports both PMA frame stats and heap usage with visual bars. |
 | `uptime` command | **IMPLEMENTED** | Reads CLINT mtime directly. |
 | `uname` command | **IMPLEMENTED** | Returns hardcoded string. |
 | Environment variables | **PARTIALLY IMPLEMENTED** | In-memory `Vec<(String,String)>`. `$VAR` expansion works. Not passed to subprocesses (no subprocesses). |
@@ -141,8 +141,8 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Capability system | **SIMULATED** | `captest` prints fake output. No capability tokens, no enforcement. |
-| Cryptography | **SIMULATED** | `pqtest` prints fake crypto results. No actual ML-KEM, ML-DSA, or any crypto implementation. |
+| Capability system | **NOT IMPLEMENTED** | `captest` now honestly reports "NOT IMPLEMENTED". No capability tokens, no enforcement. |
+| Cryptography | **NOT IMPLEMENTED** | `pqtest` now honestly reports "NOT IMPLEMENTED". No crypto code exists. |
 | Secure boot | **MISSING** | |
 | Process isolation | **MISSING** | |
 | Sandboxing | **MISSING** | |
@@ -258,16 +258,18 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 1. **Boot:** Kernel boots on `qemu-system-riscv64 -machine virt -bios none`
 2. **UART:** Console output and input via NS16550A polling
 3. **Timer:** CLINT timer interrupt fires, tick count increments
-4. **Heap:** `linked_list_allocator` provides malloc/free via Rust `alloc`
-5. **VFS:** In-memory directory tree with CRUD operations
-6. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands
-7. **Init banner:** Boot banner and service startup simulation
+4. **Physical memory:** Bitmap-based frame allocator manages 256 MiB, reserves kernel region
+5. **Heap:** `linked_list_allocator` provides malloc/free via Rust `alloc`
+6. **Trap handling:** Full register save/restore, classified exception handling
+7. **VFS:** In-memory directory tree with CRUD operations
+8. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands, PMA stats in `mem`
+9. **Init banner:** Boot banner and service startup simulation
 
 ## What Does NOT Work
 
 1. No real processes — everything is one call stack
 2. No scheduler — no preemption, no task switching
-3. No virtual memory — flat M-mode address space
+3. No virtual memory — flat M-mode address space (PMA ready, Sv39 page tables not yet implemented)
 4. No persistent storage — all data lost on reboot
 5. No real capability system
 6. No cryptography
@@ -284,12 +286,9 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Category | Count |
 |----------|-------|
-| IMPLEMENTED | 8 |
-| PARTIALLY IMPLEMENTED | 9 |
-| STUB | 6 |
-| SIMULATED | 3 |
-| PLACEHOLDER | 0 |
-| MISSING | 45+ |
-| BROKEN | 1 (trap context saving) |
-| UNSAFE | 1 (trap context saving) |
-| NEEDS REDESIGN | 3 (process model, trap handler, init system) |
+| IMPLEMENTED | 10 |
+| PARTIALLY IMPLEMENTED | 8 |
+| STUB | 5 |
+| NOT IMPLEMENTED | 2 (honestly reported) |
+| MISSING | 43+ |
+| NEEDS REDESIGN | 2 (process model, init system) |

@@ -15,7 +15,8 @@ global_asm!(include_str!("boot.S"));
 
 // ─── kernel modules ───────────────────────────────────────────────────────────
 pub mod console;   // UART driver + print!/println! macros
-pub mod memory;    // Buddy allocator (existing from v0.1)
+pub mod pma;       // Physical Memory Allocator (bitmap-based)
+pub mod memory;    // Kernel heap allocator + PMA integration
 pub mod arch;      // RISC-V arch init, trap vector (existing)
 pub mod process;   // Process table + scheduler stubs
 pub mod fs;        // VFS + in-memory filesystem
@@ -33,23 +34,27 @@ pub extern "C" fn kernel_main(hart_id: usize, dtb_ptr: usize) -> ! {
     // 1. Initialise the UART (console is usable after this point)
     //    The NS16550A is already configured by QEMU; we just start using it.
 
-    // 2. Initialise memory allocator (sets up the global heap)
+    // 2. Initialise physical memory allocator (marks reserved regions,
+    //    makes free frames available for allocation)
+    pma::init();
+
+    // 3. Initialise kernel heap allocator (for dynamic allocations)
     memory::init_heap();
 
-    // 3. Set up RISC-V trap/interrupt vector
+    // 4. Set up RISC-V trap/interrupt vector
     arch::trap_init();
 
-    // 4. Initialise the VFS root
+    // 5. Initialise the VFS root
     fs::vfs_init();
 
-    // 5. Print welcome line (before full init banner)
+    // 6. Print welcome line (before full init banner)
     println!("");
     println!("  suraksha-kernel booting on hart {}", hart_id);
     if dtb_ptr != 0 {
         println!("  DTB at {:#x}", dtb_ptr);
     }
 
-    // 6. Hand off to init (PID 1) — never returns
+    // 7. Hand off to init (PID 1) — never returns
     let mut init = init::InitSystem::new();
     init.run()
 }

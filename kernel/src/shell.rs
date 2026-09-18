@@ -12,7 +12,7 @@ use crate::{print, println};
 use crate::console::read_line;
 use crate::fs::{list_dir, read_file, write_file, create_dir, remove_file, stat};
 use crate::process::{current_pid, uptime_ms};
-use crate::memory::{heap_used, heap_total};
+use crate::memory::{heap_used, heap_total, pma_stats};
 
 const SHELL_VERSION: &str = "0.2.0";
 const MAX_HISTORY:   usize = 64;
@@ -313,11 +313,23 @@ impl Shell {
     }
 
     fn cmd_mem(&self) -> i32 {
+        // Physical Memory Allocator stats
+        let pma = pma_stats();
+        println!("  Physical Memory (PMA):  {} frames / {} frames used  ({} MiB / {} MiB)",
+            pma.used_frames, pma.total_frames,
+            pma.used_bytes / (1024 * 1024), pma.total_bytes / (1024 * 1024));
+        let pma_pct = (pma.used_frames * 100) / pma.total_frames.max(1);
+        print!("  [");
+        for i in 0..20 {
+            if i < pma_pct / 5 { print!("█"); } else { print!("░"); }
+        }
+        println!("]");
+
+        // Kernel heap stats
         let used  = heap_used();
         let total = heap_total();
         let pct   = (used * 100) / total.max(1);
-        println!("  Heap used:  {} KB / {} KB  ({}%)", used / 1024, total / 1024, pct);
-        // Simple ASCII bar
+        println!("  Kernel heap: {} KB / {} KB  ({}%)", used / 1024, total / 1024, pct);
         let filled = pct / 5;
         print!("  [");
         for i in 0..20 {
