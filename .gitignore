@@ -1,0 +1,44 @@
+# Build output
+/target/
+kernel/target/
+
+# Rust
+Cargo.lock
+*.d
+*.o
+*.elf
+*.bin
+*.img
+
+# QEMU images
+*.qcow2
+*.raw
+*.iso
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.bak
+*.orig

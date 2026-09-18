@@ -1,0 +1,100 @@
+name: SurakshaOS CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: nightly-2026-09-17
+
+jobs:
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt
+      - run: cargo fmt --check
+        working-directory: kernel
+
+  clippy:
+    name: Clippy Lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: clippy, rust-src
+      - run: cargo clippy -- -D warnings
+        working-directory: kernel
+
+  build:
+    name: Build (release)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: riscv64gc-unknown-none-elf
+          components: rust-src
+      - run: cargo build --release
+        working-directory: kernel
+      - name: Upload kernel ELF
+        uses: actions/upload-artifact@v4
+        with:
+          name: suraksha-kernel
+          path: kernel/target/riscv64gc-unknown-none-elf/release/suraksha-kernel
+
+  build-debug:
+    name: Build (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: riscv64gc-unknown-none-elf
+          components: rust-src
+      - run: cargo build
+        working-directory: kernel
+
+  # QEMU boot test — verify the kernel actually boots
+  qemu-boot:
+    name: QEMU Boot Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install QEMU
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-misc
+      - name: Download kernel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: suraksha-kernel
+          path: kernel-artifact/
+      - name: Boot test (5 second timeout)
+        run: |
+          timeout 10 qemu-system-riscv64 \
+            -machine virt \
+            -bios none \
+            -nographic \
+            -serial mon:stdio \
+            -m 256M \
+            -kernel kernel-artifact/suraksha-kernel \
+            2>&1 | tee boot.log || true
+          # Check for expected boot markers
+          if grep -q "suraksha-kernel booting" boot.log; then
+            echo "✅ Boot marker found — kernel initialized"
+          else
+            echo "❌ Boot marker NOT found"
+            cat boot.log
+            exit 1
+          fi

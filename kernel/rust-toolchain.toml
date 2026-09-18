@@ -1,4 +1,4 @@
 [toolchain]
-channel = "nightly"
+channel = "nightly-2026-09-17"
 components = ["rust-src"]
 targets = ["riscv64gc-unknown-none-elf"]
