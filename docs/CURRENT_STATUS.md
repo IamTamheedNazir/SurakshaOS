@@ -41,13 +41,13 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Heap allocator | **PARTIALLY IMPLEMENTED** | Uses `linked_list_allocator::LockedHeap`. Fixed region from `_heap_start` to `_heap_end`. Capped at 64 MB. No physical page allocator, no page tables, no virtual memory. |
+| Heap allocator | **PARTIALLY IMPLEMENTED** | Uses `linked_list_allocator::LockedHeap`. Fixed region from `_heap_start` to `_heap_end`. Capped at 64 MB. Physical page allocator (PMA) exists. Sv39 page tables active. |
 | `#[global_allocator]` | **IMPLEMENTED** | Rust global allocator wired up. |
 | `#[alloc_error_handler]` | **IMPLEMENTED** | Panics on OOM. |
 | Heap stats (`heap_used`/`heap_total`) | **IMPLEMENTED** | Exposed via allocator API. |
 | Physical memory manager | **IMPLEMENTED** | Bitmap-based frame allocator in `kernel/src/pma.rs`. Manages 256 MiB / 65536 frames. Marks kernel region as reserved. |
-| Virtual memory / page tables | **MISSING** | No Sv39/Sv48. No address spaces. |
-| Memory regions / protections | **MISSING** | Everything runs in a flat address space. |
+| Virtual memory / page tables | **IMPLEMENTED** | Sv39 page tables in `kernel/src/vmm.rs`. Identity-mapped kernel region. Map/unmap/translate API. `satp` CSR write. |
+| Memory regions / protections | **MISSING** | No per-process regions yet. |
 | Guard pages | **MISSING** | |
 | Copy-on-write | **MISSING** | |
 | Memory reclamation | **MISSING** | |
@@ -79,7 +79,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 | Process table | **MISSING** | No table, no PCB, no process states. |
 | Process lifecycle (create/run/exit/wait) | **MISSING** | |
 | Parent/child relationships | **MISSING** | |
-| Process isolation | **MISSING** | Everything runs in M-mode flat address space. |
+| Process isolation | **MISSING** | Kernel uses Sv39 but no per-process address spaces. All code runs in kernel address space. |
 | Resource accounting | **MISSING** | |
 | Process groups | **MISSING** | |
 
@@ -259,17 +259,18 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 2. **UART:** Console output and input via NS16550A polling
 3. **Timer:** CLINT timer interrupt fires, tick count increments
 4. **Physical memory:** Bitmap-based frame allocator manages 256 MiB, reserves kernel region
-5. **Heap:** `linked_list_allocator` provides malloc/free via Rust `alloc`
-6. **Trap handling:** Full register save/restore, classified exception handling
-7. **VFS:** In-memory directory tree with CRUD operations
-8. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands, PMA stats in `mem`
-9. **Init banner:** Boot banner and service startup simulation
+5. **Virtual memory:** Sv39 page tables active, identity-mapped kernel region + MMIO
+6. **Heap:** `linked_list_allocator` provides malloc/free via Rust `alloc`
+7. **Trap handling:** Full register save/restore, classified exception handling
+8. **VFS:** In-memory directory tree with CRUD operations
+9. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands, memory stats
+10. **Init banner:** Boot banner and service startup simulation
 
 ## What Does NOT Work
 
 1. No real processes — everything is one call stack
 2. No scheduler — no preemption, no task switching
-3. No virtual memory — flat M-mode address space (PMA ready, Sv39 page tables not yet implemented)
+3. No per-process address spaces — kernel uses Sv39 but no user/kernel separation
 4. No persistent storage — all data lost on reboot
 5. No real capability system
 6. No cryptography
@@ -286,9 +287,9 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Category | Count |
 |----------|-------|
-| IMPLEMENTED | 10 |
-| PARTIALLY IMPLEMENTED | 8 |
+| IMPLEMENTED | 11 |
+| PARTIALLY IMPLEMENTED | 7 |
 | STUB | 5 |
 | NOT IMPLEMENTED | 2 (honestly reported) |
-| MISSING | 43+ |
+| MISSING | 42+ |
 | NEEDS REDESIGN | 2 (process model, init system) |

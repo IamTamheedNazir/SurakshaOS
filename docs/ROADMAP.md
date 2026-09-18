@@ -60,10 +60,10 @@
 ### P0 — Kernel Memory
 
 - [x] **Physical frame allocator** — bitmap allocator for physical frames (kernel/src/pma.rs)
-- [ ] **Sv39 page table support** — create, map, unmap, permissions
-- [ ] **Kernel address space** — separate kernel virtual memory
-- [ ] **User address spaces** — isolated per-process
-- [ ] **Page fault handler** — proper classification and response
+- [x] **Sv39 page table support** — create, map, unmap, permissions (kernel/src/vmm.rs)
+- [x] **Kernel address space** — identity-mapped for boot (kernel + MMIO), higher-half TODO
+- [ ] **User address spaces** — isolated per-process (next step after M1 completion)
+- [ ] **Page fault handler** — proper classification (page faults classified in arch.rs, not yet handling VM faults)
 - [ ] **Memory map discovery** — parse DTB memory node
 
 ### P0 — Process Model

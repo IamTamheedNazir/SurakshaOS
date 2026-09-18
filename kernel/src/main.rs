@@ -16,6 +16,7 @@ global_asm!(include_str!("boot.S"));
 // ─── kernel modules ───────────────────────────────────────────────────────────
 pub mod console;   // UART driver + print!/println! macros
 pub mod pma;       // Physical Memory Allocator (bitmap-based)
+pub mod vmm;       // Virtual Memory Manager (Sv39 page tables)
 pub mod memory;    // Kernel heap allocator + PMA integration
 pub mod arch;      // RISC-V arch init, trap vector (existing)
 pub mod process;   // Process table + scheduler stubs
@@ -41,20 +42,25 @@ pub extern "C" fn kernel_main(hart_id: usize, dtb_ptr: usize) -> ! {
     // 3. Initialise kernel heap allocator (for dynamic allocations)
     memory::init_heap();
 
-    // 4. Set up RISC-V trap/interrupt vector
+    // 4. Set up Sv39 page tables and enable virtual memory
+    //    Identity-maps lower512 MiB (MMIO) and kernel region.
+    //    After this point, all memory access goes through page tables.
+    vmm::init();
+
+    // 5. Set up RISC-V trap/interrupt vector
     arch::trap_init();
 
-    // 5. Initialise the VFS root
+    // 6. Initialise the VFS root
     fs::vfs_init();
 
-    // 6. Print welcome line (before full init banner)
+    // 7. Print welcome line (before full init banner)
     println!("");
     println!("  suraksha-kernel booting on hart {}", hart_id);
     if dtb_ptr != 0 {
         println!("  DTB at {:#x}", dtb_ptr);
     }
 
-    // 7. Hand off to init (PID 1) — never returns
+    // 8. Hand off to init (PID 1) — never returns
     let mut init = init::InitSystem::new();
     init.run()
 }

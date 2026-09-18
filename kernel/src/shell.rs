@@ -336,6 +336,10 @@ impl Shell {
             if i < filled { print!("█"); } else { print!("░"); }
         }
         println!("]");
+
+        // Virtual memory stats
+        println!("  Virtual Memory:  Sv39 (identity-mapped kernel)");
+        crate::vmm::print_stats();
         0
     }
 
@@ -349,7 +353,7 @@ impl Shell {
     }
 
     fn cmd_uname(&self) -> i32 {
-        println!("SurakshaOS 0.2.0 RISC-V riscv64gc suraksha-kernel");
+        println!("SurakshaOS 0.2.0 RISC-V riscv64gc suraksha-kernel sv39");
         0
     }
 
@@ -441,8 +445,9 @@ impl Shell {
         println!("  Repository : github.com/IamTamheedNazir/SurakshaOS");
         println!("  Maintainer : Tamheed Nazir");
         println!("");
-        println!("  Status: Early prototype — boots, runs shell.");
-        println!("  No process isolation, no virtual memory, no scheduler,");
+        println!("  Status: Early prototype — boots, runs shell, Sv39 active.");
+        println!("  Virtual memory: Sv39 identity-mapped (no user/kernel split yet)");
+        println!("  No process isolation, no scheduler,");
         println!("  no persistent storage, no networking, no GUI.");
         println!("");
         println!("  \"Digital independence for every Indian.\"");
