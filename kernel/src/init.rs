@@ -133,8 +133,9 @@ impl InitSystem {
     }
 
     fn start_service(&self, name: &str, _critical: bool) -> Result<ProcessId, &'static str> {
-        // In a real OS this would exec a binary from /bin/
-        // For now we simulate with in-kernel service stubs
+        // NOTE: This is a STUB. No real processes are spawned.
+        // Services are simulated with hardcoded PIDs.
+        // See docs/ROADMAP.md → M3 for real init process implementation.
         match name {
             "memory-guard"   => Ok(ProcessId(2)),
             "capability-mgr" => Ok(ProcessId(3)),

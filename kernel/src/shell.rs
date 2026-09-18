@@ -304,13 +304,11 @@ impl Shell {
     fn cmd_ps(&self) -> i32 {
         println!("  PID   NAME               STATUS");
         println!("  ────  ─────────────────  ────────");
-        println!("  1     init               running");
-        println!("  2     memory-guard       running");
-        println!("  3     capability-mgr     running");
-        println!("  4     entropy-pool       running");
-        println!("  5     device-manager     running");
-        println!("  6     logger             running");
-        println!("  {}     sursh              running  ← you are here", current_pid().0);
+        println!("  1     init               running  (kernel thread, not a real process)");
+        println!("");
+        println!("  [NOTE] No real process management exists yet.");
+        println!("  All processes currently run on the kernel stack.");
+        println!("  See docs/ROADMAP.md → M2 for process implementation plan.");
         0
     }
 
@@ -396,64 +394,44 @@ impl Shell {
         println!("Capability system test");
         println!("══════════════════════");
         println!("");
-        println!("  Capabilities enforce the principle of least privilege.");
-        println!("  Every resource access requires an explicit, unforgeable token.");
+        println!("  NOT IMPLEMENTED — no capability system exists yet.");
         println!("");
-        println!("  Test 1: create file capability........");
-        println!("    CapToken {{ id: 0xA3F1, resource: '/tmp/test', perms: READ|WRITE, ttl: 60s }}");
-        println!("    Result: OK — token issued");
+        println!("  Planned: capability tokens that enforce least-privilege");
+        println!("  resource access. Every resource access will require an");
+        println!("  explicit, unforgeable token.");
         println!("");
-        println!("  Test 2: access with valid cap..........");
-        println!("    open('/tmp/test', cap=0xA3F1) → fd=3  OK");
-        println!("");
-        println!("  Test 3: access without cap (should fail)");
-        println!("    open('/etc/shadow', cap=NONE)  → EPERM  OK (correctly denied)");
-        println!("");
-        println!("  Test 4: expired cap (should fail)......");
-        println!("    open('/tmp/test', cap=0xA3F1[expired])  → ECAPEXPIRED  OK");
-        println!("");
-        println!("  All capability tests passed.");
-        println!("  [NOTE] Real kernel enforcement coming in v0.3.0");
-        0
+        println!("  See docs/ROADMAP.md → M4 (Secure OS) for implementation plan.");
+        1
     }
 
     fn cmd_pqtest(&self) -> i32 {
         println!("Post-quantum cryptography test");
         println!("══════════════════════════════");
         println!("");
-        println!("  Algorithms: ML-KEM-768 (NIST FIPS 203), ML-DSA-65 (FIPS 204)");
+        println!("  NOT IMPLEMENTED — no cryptographic code exists yet.");
         println!("");
-        println!("  Test 1: ML-KEM key generation..........");
-        println!("    pk = [768-byte public key]  OK");
-        println!("    sk = [2400-byte secret key] OK");
+        println!("  Planned algorithms:");
+        println!("    - ML-KEM-768 (NIST FIPS 203) for key encapsulation");
+        println!("    - ML-DSA-65 (NIST FIPS 204) for digital signatures");
         println!("");
-        println!("  Test 2: encapsulation....................");
-        println!("    (pk) → ciphertext + shared_secret    OK");
-        println!("");
-        println!("  Test 3: decapsulation....................");
-        println!("    (sk, ciphertext) → shared_secret     OK");
-        println!("    shared_secret match: YES");
-        println!("");
-        println!("  Test 4: ML-DSA-65 sign + verify.........");
-        println!("    sign(sk, msg)   → signature  OK");
-        println!("    verify(pk, msg, sig)  → VALID  OK");
-        println!("");
-        println!("  All PQ crypto tests passed.");
-        println!("  [NOTE] Real pqcrypto-kyber crate integration coming in v0.3.0");
-        0
+        println!("  See docs/ROADMAP.md → M4 (Secure OS) for implementation plan.");
+        1
     }
 
     fn cmd_about(&self) -> i32 {
         println!("");
         println!("  SurakshaOS — India's Sovereign Mobile Operating System");
         println!("  ─────────────────────────────────────────────────────");
-        println!("  Version    : 0.2.0");
+        println!("  Version    : 0.2.0-alpha (prototype)");
         println!("  Kernel     : suraksha-kernel (Rust, no_std)");
-        println!("  Target     : RISC-V riscv64gc / SHAKTI C-Class");
-        println!("  Security   : Capability-based, post-quantum ready");
-        println!("  License    : GPLv3 (kernel), Apache 2.0 (userspace)");
+        println!("  Target     : RISC-V riscv64gc (QEMU virt)");
+        println!("  License    : GPLv3");
         println!("  Repository : github.com/IamTamheedNazir/SurakshaOS");
         println!("  Maintainer : Tamheed Nazir");
+        println!("");
+        println!("  Status: Early prototype — boots, runs shell.");
+        println!("  No process isolation, no virtual memory, no scheduler,");
+        println!("  no persistent storage, no networking, no GUI.");
         println!("");
         println!("  \"Digital independence for every Indian.\"");
         println!("");
