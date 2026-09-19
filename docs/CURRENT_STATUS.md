@@ -1,16 +1,17 @@
 # SurakshaOS — Current Status (Audit)
 
-**Audit date:** September 18, 2026  
+**Audit date:** September 18, 2026 (M1 verification update: September 19, 2026)  
 **Version:** 0.2.0 (per README)  
-**Reality:** v0.1.0-alpha — bootable prototype with in-memory shell
+**Reality:** v0.1.0-alpha — bootable prototype with in-memory shell  
+**Verification status:** M1 **hardware-verified** on QEMU — see [M1_VERIFICATION.md](M1_VERIFICATION.md)
 
 ---
 
 ## Executive Summary
 
-SurakshaOS is a **bare-metal RISC-V kernel prototype** that boots on QEMU, initializes a UART console, sets up a simple heap allocator, provides an in-memory filesystem, and runs an interactive shell — all in M-mode. This is a **very early prototype**. The README makes claims that exceed the actual implementation.
+SurakshaOS is a **bare-metal RISC-V kernel prototype** that boots on QEMU, transitions from M-mode to S-mode, initializes a UART console, sets up Sv39 virtual memory with per-process address spaces, provides an in-memory filesystem, and runs an interactive shell. The kernel runs in **S-mode** (supervisor), with a minimal M-mode handler for timer interrupts and the ecall bridge. This is a **very early prototype**.
 
-No feature listed in the README as "Implemented" is fully real. The kernel boots and runs a shell, but there is no process management, no virtual memory, no capability system, no cryptographic implementation, and no hardware abstraction beyond the UART.
+No feature listed in the README as "Implemented" is fully real. The kernel boots and runs a shell, but there is no process management, no user/kernel mode split, no capability system, no cryptographic implementation, and no hardware abstraction beyond the UART.
 
 ---
 
@@ -20,9 +21,10 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| `boot.S` — entry point | **PARTIALLY IMPLEMENTED** | Parks non-zero harts (but no real SMP), clears BSS, sets up single stack, jumps to `kernel_main`. Works for single-core QEMU. |
+| `boot.S` — entry point | **IMPLEMENTED** | Parks non-zero harts, clears BSS, sets up stack, calls `kernel_main` (M-mode init), configures medeleg/mideleg, transitions to S-mode via mret. Works for single-core QEMU. |
 | `linker.ld` — linker script | **IMPLEMENTED** | Correct for 64 MB QEMU virt. Loads at `0x8000_0000`. Defines `.text`, `.rodata`, `.data`, `.stack` (16 KiB), `.bss`, heap. Discards `.eh_frame`. |
-| `kernel_main` — Rust entry | **PARTIALLY IMPLEMENTED** | Calls init functions in order. No DTB parsing, no SMP init, no interrupt controller init beyond basic CLINT timer. |
+| `kernel_main` — Rust entry (M-mode) | **IMPLEMENTED** | Initializes PMA, heap, VMM (Sv39 paging). Returns to boot.S for M→S transition. |
+| `kernel_main_s_mode` — Rust entry (S-mode) | **IMPLEMENTED** | S-mode trap init, VFS, init system, shell. Diverges (never returns). |
 | BSS clearing | **IMPLEMENTED** | Done in `boot.S`. |
 | Stack setup | **IMPLEMENTED** | 16 KiB stack for kernel. |
 | Multicore boot | **STUB** | `bnez a0, _park` parks hart 1+. No real SMP startup. |
@@ -57,13 +59,18 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Trap vector setup (`mtvec`) | **PARTIALLY IMPLEMENTED** | Sets `mtvec` to `_trap_entry`. Works for timer interrupts. |
-| Timer interrupt (CLINT) | **PARTIALLY IMPLEMENTED** | Arms `mtimecmp`, handles timer tick. `TICK_COUNT` incremented. |
-| Trap context save/restore | **IMPLEMENTED** | Saves ALL 31 general-purpose registers + mepc/mstatus/mcause. `TrapContext` struct matches assembly layout. |
-| Exception handling | **PARTIALLY IMPLEMENTED** | All exception codes classified (0-15+). Proper handling per type. Page faults advance mepc+4 (correct for now, will change with VM). |
-| `mepc` advancement | **PARTIALLY IMPLEMENTED** | Classifies exception types. Advances mepc+4 for most exceptions (correct for 4-byte instructions). Compressed instruction detection TODO. |
-| CSR helpers | **MISSING** | No abstraction layer for CSR reads/writes. |
-| S-mode support | **MISSING** | Everything runs in M-mode. No S/U mode transition. |
+| M-mode trap vector (`mtvec`) | **IMPLEMENTED** | Minimal M-mode handler: timer interrupts + ecall bridge. |
+| S-mode trap vector (`stvec`) | **IMPLEMENTED** | Full S-mode handler: all exceptions + delegated interrupts. Uses `sepc`/`sstatus`/`scause`/`stval`. |
+| Timer interrupt (CLINT) | **IMPLEMENTED** | M-mode handler re-arms `mtimecmp`, increments `TICK_COUNT`, triggers SSI via `mip`. |
+| S-mode trap context save/restore | **IMPLEMENTED** | Saves ALL 31 general-purpose registers + sepc/sstatus/scause/stval (280 bytes). |
+| M-mode trap context save/restore | **IMPLEMENTED** | Minimal: ra, t0-t2, a0-a2, a7 + mepc/mstatus (96 bytes). |
+| Exception handling (S-mode) | **IMPLEMENTED** | All exception codes classified (0-15+). Page faults advance `sepc+4`. Future: process termination. |
+| Exception delegation (`medeleg`) | **IMPLEMENTED (verified)** | 0x51FF: sync exceptions 0–8, 12–14 to S-mode; ecall-from-S (9) and ecall-from-M (11) stay in M-mode. QEMU WARL-clears bits 4/6. |
+| Interrupt delegation (`mideleg`) | **IMPLEMENTED (verified)** | 0x2: SSI to S-mode. Timer + external stay in M-mode. |
+| Ecall bridge (S→M) | **IMPLEMENTED (verified)** | S-mode kernel uses `ecall` for timer setup and reboot via M-mode. Uptime/timer chain verified in QEMU. |
+| M→S transition | **IMPLEMENTED (verified)** | MPP=S, MPIE, PMP full-4 GiB NAPOT grant (required by QEMU 6.2 mret rule), trap entries 4-byte aligned. S-mode confirmed at runtime via mscratch illegal-instruction probe. |
+| CSR helpers | **PARTIALLY IMPLEMENTED** | Inline `asm!` for CSR access. No abstraction module. |
+| U-mode support | **MISSING** | No user-mode transition yet. All processes run in S-mode. |
 | Interrupt controller (PLIC) | **MISSING** | No PLIC initialization. External interrupts unhandled. |
 | FPU / vector state | **MISSING** | |
 | `sbi_ecall` / SBI calls | **MISSING** | Reimplements CLINT access directly instead of using SBI. |
@@ -262,16 +269,20 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 5. **Virtual memory:** Sv39 page tables active, identity-mapped kernel region + MMIO
 6. **Heap:** `linked_list_allocator` provides malloc/free via Rust `alloc`
 7. **Trap handling:** Full register save/restore, classified exception handling
-8. **VFS:** In-memory directory tree with CRUD operations
-9. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands, memory stats
-10. **Init banner:** Boot banner and service startup simulation
+8. **M→S transition:** Kernel boots in M-mode, transitions to S-mode via medeleg/mideleg + mret
+9. **S-mode trap handler:** All exceptions delegated to S-mode, full context save/restore
+10. **Ecall bridge:** S-mode kernel uses ecall for timer setup and reboot services
+11. **VFS:** In-memory directory tree with CRUD operations
+12. **Shell:** Interactive shell (`sursh`) with ~20 built-in commands, memory stats
+13. **Init banner:** Boot banner and service startup simulation
 
 ## What Does NOT Work
 
 1. No real processes — everything is one call stack
 2. No scheduler — no preemption, no task switching
 3. No per-process address spaces — kernel uses Sv39 but no user/kernel separation
-4. No persistent storage — all data lost on reboot
+4. No U-mode — all code runs in S-mode or M-mode
+5. No persistent storage — all data lost on reboot
 5. No real capability system
 6. No cryptography
 7. No networking

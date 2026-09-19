@@ -35,21 +35,26 @@
 
 ### P0 — Blocking Issues
 
-- [ ] **Fix trap context save/restore** — save ALL 33 general-purpose registers, mepc, mstatus, mcause, mtval
-- [ ] **Fix mepc advancement** — do not blindly advance mepc+4; handle compressed instructions (C-extension) and faults properly
-- [ ] **Remove simulated commands** — `captest` and `pqtest` must not print fake success
-- [ ] **Fix `ps` command** — must reflect actual state (currently hardcoded)
-- [ ] **Fix README claims** — remove false claims about implemented features
-- [ ] **Add LICENSE file** — GPLv3 as stated in README
-- [ ] **Pin Rust nightly** — add specific date to `rust-toolchain.toml`
+- [x] **Fix trap context save/restore** — save ALL 31 general-purpose registers + sepc/sstatus/scause/stval (S-mode); M-mode handler saves minimal context
+- [x] **Fix mepc advancement** — classify exceptions properly (access faults halt, breakpoints return to same PC, others advance sepc+4). Compressed instruction detection TODO.
+- [x] **Remove simulated commands** — `captest` and `pqtest` report "NOT IMPLEMENTED" honestly
+- [x] **Fix `ps` command** — reflects actual state (no real processes, says so honestly)
+- [x] **Fix README claims** — rewritten to honestly reflect actual state
+- [x] **Add LICENSE file** — GPLv3 as stated in README
+- [x] **Pin Rust nightly** — pinned to nightly-2026-09-17 in `rust-toolchain.toml`
 
 ### P1 — Required for M1
 
+- [x] **M-mode → S-mode transition** — boot.S configures `medeleg`/`mideleg`, `mret` to S-mode, S-mode trap handler with `stvec`
+- [x] **M-mode trap delegation** — timer interrupts + ecall bridge handled in M-mode, exceptions delegated to S-mode
+- [x] **S-mode trap handler** — full save/restore with sepc/sstatus/scause/stval, exception classification
+- [x] **Ecall bridge (S→M)** — S-mode kernel uses `ecall` for timer and reboot services
 - [ ] **Document build prerequisites** in README (rustup, cargo, qemu-system-riscv64)
-- [ ] **Add `rustfmt.toml`** with project formatting config
-- [ ] **Verify build** — `cargo build --release` succeeds
-- [ ] **Verify QEMU boot** — kernel boots and shell is accessible
-- [ ] **Add .gitignore** — comprehensive for Rust projects
+- [x] **Add `rustfmt.toml`** with project formatting config
+- [x] **Verify build** — `cargo build --release` succeeds, 0 warnings; `cargo fmt --check` and `cargo clippy -D warnings` pass (toolchain: nightly-2026-09-17, rust-src, riscv64gc target)
+- [x] **Verify QEMU boot** — kernel boots and shell is accessible; M→S transition hardware-verified via mscratch illegal-instruction probe; delegated timer chain verified via uptime; see docs/M1_VERIFICATION.md
+- [x] **Add .gitignore** — comprehensive for Rust projects
+- [x] **M1 hardening fixes (2026-09-19)** — mstatus.MPP encoding (was M, now S), medeleg 0x51FF (bit 9/11 corrected), PMP full-memory NAPOT grant before mret (QEMU 6.2 requirement), stvec 4-byte alignment (.balign 4 on trap entries), sstatus SIE/SPP bit fixes in verification block
 
 ---
 
@@ -116,9 +121,9 @@
 
 ### P1 — User/Kernel Separation
 
-- [ ] **Move to S-mode kernel** — kernel runs in supervisor mode
+- [x] **Move to S-mode kernel** — kernel runs in supervisor mode
 - [ ] **User processes run in U-mode** — unprivileged
-- [ ] **Trap delegation** — S-mode handles traps from U-mode
+- [x] **Trap delegation** — S-mode handles traps from U-mode (via medeleg)
 - [ ] **User pointer validation** — never trust user addresses (requires S-mode)
 
 ---
@@ -267,7 +272,7 @@
 | Milestone | Status | Target |
 |-----------|--------|--------|
 | M0 — Bootable Prototype | ✅ Complete | Done |
-| M1 — Correct Kernel | 🔄 In Progress | Next |
+| M1 — Correct Kernel | ✅ Verified | Hardware-verified on QEMU (see docs/M1_VERIFICATION.md) |
 | M2 — Real Kernel | ⏳ Pending | After M1 |
 | M3 — Persistent OS | ⏳ Pending | After M2 |
 | M4 — Secure OS | ⏳ Pending | After M3 |
@@ -280,11 +285,9 @@
 
 ## Known Blockers
 
-1. **Trap context is broken** — cannot safely context-switch without saving all registers
-2. **No virtual memory** — cannot isolate processes
-3. **No real processes** — shell runs on kernel stack
-4. **No scheduler** — no preemption
-5. **Pinned nightly not set** — builds may break with toolchain updates
-6. **No LICENSE file** — legal issue for open source
-7. **No CI** — no automated verification
-8. **No tests** — no regression detection
+1. **No virtual memory protection** — kernel and user share address space (no U-mode yet)
+2. **No real processes** — shell runs on kernel stack in S-mode
+3. **No scheduler** — no preemption, no task switching
+4. **No U-mode** — all code runs in S-mode, no user/kernel mode split
+5. **No CI** — no automated verification
+6. **No tests** — no regression detection

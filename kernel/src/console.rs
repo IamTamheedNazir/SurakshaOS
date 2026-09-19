@@ -1,17 +1,16 @@
 /// SurakshaOS Console Driver
 /// Wraps the NS16550A UART for formatted, line-buffered I/O.
 /// Provides print!/println! macros and blocking read_line().
-
 use core::fmt::{self, Write};
 use spin::Mutex;
 
 // NS16550A register offsets (MMIO, 8-bit registers)
 const UART_BASE: usize = 0x1000_0000;
-const UART_RBR:  usize = UART_BASE + 0x00; // Receive Buffer Register  (read)
-const UART_THR:  usize = UART_BASE + 0x00; // Transmit Holding Register (write)
-const UART_LSR:  usize = UART_BASE + 0x05; // Line Status Register
+const UART_RBR: usize = UART_BASE; // Receive Buffer Register  (read)
+const UART_THR: usize = UART_BASE; // Transmit Holding Register (write)
+const UART_LSR: usize = UART_BASE + 0x05; // Line Status Register
 const UART_LSR_DATA_READY: u8 = 0x01;
-const UART_LSR_TX_EMPTY:   u8 = 0x20;
+const UART_LSR_TX_EMPTY: u8 = 0x20;
 
 pub static CONSOLE: Mutex<Console> = Mutex::new(Console);
 
@@ -23,17 +22,23 @@ impl Console {
         // Spin until the TX FIFO has room
         loop {
             let lsr = unsafe { core::ptr::read_volatile(UART_LSR as *const u8) };
-            if lsr & UART_LSR_TX_EMPTY != 0 { break; }
+            if lsr & UART_LSR_TX_EMPTY != 0 {
+                break;
+            }
             core::hint::spin_loop();
         }
-        unsafe { core::ptr::write_volatile(UART_THR as *mut u8, byte); }
+        unsafe {
+            core::ptr::write_volatile(UART_THR as *mut u8, byte);
+        }
     }
 
     #[inline]
     fn read_byte_blocking(&self) -> u8 {
         loop {
             let lsr = unsafe { core::ptr::read_volatile(UART_LSR as *const u8) };
-            if lsr & UART_LSR_DATA_READY != 0 { break; }
+            if lsr & UART_LSR_DATA_READY != 0 {
+                break;
+            }
             core::hint::spin_loop();
         }
         unsafe { core::ptr::read_volatile(UART_RBR as *const u8) }
@@ -41,7 +46,9 @@ impl Console {
 
     pub fn write_str_raw(&self, s: &str) {
         for byte in s.bytes() {
-            if byte == b'\n' { self.write_byte(b'\r'); }
+            if byte == b'\n' {
+                self.write_byte(b'\r');
+            }
             self.write_byte(byte);
         }
     }
@@ -97,7 +104,7 @@ pub fn read_line() -> alloc::string::String {
                 print_str("\n");
                 return "exit".into();
             }
-            b if b >= 0x20 && b < 0x7F => {
+            b if (0x20..0x7F).contains(&b) => {
                 // Printable ASCII: echo and append
                 buf.push(b as char);
                 console.write_byte(b);
@@ -132,21 +139,30 @@ macro_rules! println {
 
 #[allow(dead_code)]
 pub enum Color {
-    Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, White, BrightGreen,
+    Reset,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+    BrightGreen,
 }
 
 pub fn set_color(c: Color) {
     let code = match c {
-        Color::Reset        => "\x1b[0m",
-        Color::Black        => "\x1b[30m",
-        Color::Red          => "\x1b[31m",
-        Color::Green        => "\x1b[32m",
-        Color::Yellow       => "\x1b[33m",
-        Color::Blue         => "\x1b[34m",
-        Color::Magenta      => "\x1b[35m",
-        Color::Cyan         => "\x1b[36m",
-        Color::White        => "\x1b[37m",
-        Color::BrightGreen  => "\x1b[92m",
+        Color::Reset => "\x1b[0m",
+        Color::Black => "\x1b[30m",
+        Color::Red => "\x1b[31m",
+        Color::Green => "\x1b[32m",
+        Color::Yellow => "\x1b[33m",
+        Color::Blue => "\x1b[34m",
+        Color::Magenta => "\x1b[35m",
+        Color::Cyan => "\x1b[36m",
+        Color::White => "\x1b[37m",
+        Color::BrightGreen => "\x1b[92m",
     };
     print_str(code);
 }

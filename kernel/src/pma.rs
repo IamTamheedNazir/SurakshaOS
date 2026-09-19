@@ -9,17 +9,20 @@
 //! # Design
 //!
 //! - Page/frame size: 4096 bytes (RISC-V Sv39 standard)
-//! - Bitmap: 1 bit per frame → 128 MiB = 32768 frames → 4096 bytes of bitmap
+//! - Bitmap: 1 bit per frame → 256 MiB = 65536 frames → 8 KiB of bitmap
 //! - Thread-safe via `spin::Mutex`
-//! - Reserved regions: firmware, MMIO, kernel code/data/heap/bitmap
-//! - All other RAM frames are available for allocation
+//! - Reserved regions: kernel image (RAM start → BSS end) and the kernel
+//!   heap (BSS end → linker RAM end). Page-table frames are allocated from
+//!   physical RAM *above* the heap so they can never overlap heap memory.
+//! - MMIO regions (UART, CLINT, PLIC) are below `RAM_START` and outside
+//!   the managed range.
 //!
 //! # Safety
 //!
-//! This module performs raw pointer arithmetic on physical addresses.
-//! All `unsafe` blocks are documented. The allocator is the sole owner
-//! of the physical frame bitmap; concurrent access is serialized by the
-//! internal mutex.
+//! The allocator state lives in a `Mutex<Option<BitmapPma>>`; the bitmap
+//! slice itself points at a BSS static that is mutably borrowed exactly
+//! once during `init()`, before any other access. All post-init access is
+//! serialized by the mutex.
 
 use spin::Mutex;
 
@@ -31,25 +34,12 @@ pub const PAGE_SIZE: usize = 4096;
 /// Physical base address of RAM on QEMU virt machine.
 pub const RAM_START: usize = 0x8000_0000;
 
-/// Total physical RAM in bytes (256 MiB, QEMU virt default).
+/// Total physical RAM in bytes (256 MiB, QEMU virt default with `-m 256M`).
 /// TODO: Read from DTB memory node once DTB parser is implemented.
 pub const RAM_SIZE: usize = 256 * 1024 * 1024;
 
 /// Total number of physical frames in the managed region.
 pub const TOTAL_FRAMES: usize = RAM_SIZE / PAGE_SIZE;
-
-/// UART (NS16550A) MMIO region on QEMU virt: 0x1000_0000, 0x1000 bytes.
-const UART_BASE: usize = 0x0010_0000;
-const UART_SIZE: usize = 0x0010_000;
-
-/// CLINT (Core Local Interruptor) MMIO region on QEMU virt: 0x0200_0000, 0x10000 bytes.
-const CLINT_BASE: usize = 0x0200_0000;
-const CLINT_SIZE: usize = 0x0001_0000;
-
-/// PLIC (Platform-Level Interrupt Controller) MMIO region on QEMU virt: 0x0C00_0000.
-/// 64 MiB for max 15872 sources (QEMU default).
-const PLIC_BASE: usize = 0x0C00_0000;
-const PLIC_SIZE: usize = 64 * 1024 * 1024;
 
 // ─── Physical Address Type ──────────────────────────────────────────────────
 
@@ -68,6 +58,12 @@ impl PhysAddr {
     #[inline]
     pub fn page_align_down(self) -> PhysAddr {
         PhysAddr(self.0 & !(PAGE_SIZE - 1))
+    }
+
+    /// Round up to the next page boundary.
+    #[inline]
+    pub fn page_align_up(self) -> PhysAddr {
+        PhysAddr((self.0 + PAGE_SIZE - 1) & !(PAGE_SIZE - 1))
     }
 
     /// Return true if this address is page-aligned.
@@ -113,21 +109,21 @@ pub struct PmaStats {
     pub total_bytes: usize,
     /// Used physical memory in bytes.
     pub used_bytes: usize,
+    /// Base physical address of the managed region (inclusive).
+    pub region_base: usize,
+    /// End physical address of the managed region (exclusive).
+    pub region_end: usize,
 }
 
-// ─── Physical Memory Allocator ─────────────────────────────────────────────
+// ─── Bitmap Allocator Core ──────────────────────────────────────────────────
 
 /// Bitmap-based physical frame allocator.
 ///
 /// Each bit in the bitmap corresponds to one 4 KiB frame:
 ///   - `0` = frame is free
 ///   - `1` = frame is in use (allocated or reserved)
-///
-/// The bitmap is stored in BSS (zeroed by boot.S), so all frames
-/// start as free. `init()` marks reserved regions before first use.
 struct BitmapPma {
-    /// Bitmap: bit `i` corresponds to frame `i`.
-    /// `bitmap[i / 64]` bit `(i % 64)` indicates frame `i` state.
+    /// Bitmap: bit `i` corresponds to frame `i` (relative to `base_addr`).
     bitmap: &'static mut [u64],
 
     /// Number of frames currently marked as used.
@@ -153,17 +149,22 @@ impl BitmapPma {
     /// - `base_addr` and `end_addr` must be page-aligned and describe
     ///   a valid physical memory region.
     /// - All frames in the region must be accounted for in the bitmap.
-    unsafe fn new(
-        bitmap_slice: &'static mut [u64],
-        base_addr: usize,
-        end_addr: usize,
-    ) -> Self {
-        assert!(base_addr % PAGE_SIZE == 0, "base_addr must be page-aligned");
-        assert!(end_addr % PAGE_SIZE == 0, "end_addr must be page-aligned");
-        assert!(end_addr > base_addr, "end_addr must be greater than base_addr");
+    unsafe fn new(bitmap_slice: &'static mut [u64], base_addr: usize, end_addr: usize) -> Self {
+        assert!(
+            base_addr.is_multiple_of(PAGE_SIZE),
+            "base_addr must be page-aligned"
+        );
+        assert!(
+            end_addr.is_multiple_of(PAGE_SIZE),
+            "end_addr must be page-aligned"
+        );
+        assert!(
+            end_addr > base_addr,
+            "end_addr must be greater than base_addr"
+        );
 
         let total_frames = (end_addr - base_addr) / PAGE_SIZE;
-        let bitmap_words = (total_frames + 63) / 64;
+        let bitmap_words = total_frames.div_ceil(64);
         assert!(
             bitmap_slice.len() >= bitmap_words,
             "bitmap too small: need {} words, got {}",
@@ -184,6 +185,12 @@ impl BitmapPma {
             base_addr,
             end_addr,
         }
+    }
+
+    /// Get the first managed frame number (offset from physical frame 0).
+    #[inline]
+    fn base_frame(&self) -> usize {
+        self.base_addr / PAGE_SIZE
     }
 
     /// Mark a single frame as used (allocated or reserved).
@@ -218,12 +225,6 @@ impl BitmapPma {
         for i in 0..count {
             self.mark_used(start_frame + i);
         }
-    }
-
-    /// Set the used-frame count without going through individual marks.
-    /// Used during initialization to bulk-mark the bitmap.
-    fn set_bulk_used_count(&mut self, count: usize) {
-        self.used_frames = count;
     }
 
     /// Allocate a single physical frame.
@@ -288,9 +289,7 @@ impl BitmapPma {
                         self.bitmap[w] |= 1 << b;
                     }
                     self.used_frames += count;
-                    return Some(PhysAddr::from_frame_number(
-                        start + self.base_frame(),
-                    ));
+                    return Some(PhysAddr::from_frame_number(start + self.base_frame()));
                 }
             } else {
                 // Break the run
@@ -340,11 +339,6 @@ impl BitmapPma {
         }
     }
 
-    /// Get the first managed frame number (offset from frame 0).
-    fn base_frame(&self) -> usize {
-        self.base_addr / PAGE_SIZE
-    }
-
     /// Get allocator statistics.
     fn stats(&self) -> PmaStats {
         PmaStats {
@@ -353,6 +347,8 @@ impl BitmapPma {
             free_frames: self.total_frames - self.used_frames,
             total_bytes: self.total_frames * PAGE_SIZE,
             used_bytes: self.used_frames * PAGE_SIZE,
+            region_base: self.base_addr,
+            region_end: self.end_addr,
         }
     }
 }
@@ -361,32 +357,25 @@ impl BitmapPma {
 
 /// The global physical memory allocator, protected by a spin lock.
 ///
-/// # Safety
-///
-/// Initialized exactly once by `init()`. All public functions acquire
-/// the lock before accessing the inner `BitmapPma`, so concurrent
-/// access is safe.
-static PMA: Mutex<BitmapPma> = Mutex::new(BitmapPma {
-    bitmap: &mut [],
-    used_frames: 0,
-    total_frames: 0,
-    base_addr: 0,
-    end_addr: 0,
-});
+/// `None` before `init()`. Every accessor expects initialization — this
+/// makes use-before-init a loud panic instead of silent corruption.
+static PMA: Mutex<Option<BitmapPma>> = Mutex::new(None);
 
 /// Bitmap storage. Placed in BSS (zeroed by boot.S).
 ///
-/// Size: `ceil(TOTAL_FRAMES / 64)` × 8 bytes = `ceil(32768 / 64)` × 8
-///     = 512 × 8 = 4096 bytes = 1 page.
-///
-/// This static is mutably borrowed during `init()` only; after that
-/// the `PMA` lock is the sole access path.
-static mut BITMAP_STORAGE: [u64; (TOTAL_FRAMES + 63) / 64] = [0u64; (TOTAL_FRAMES + 63) / 64];
+/// Size: `ceil(TOTAL_FRAMES / 64)` × 8 bytes = `ceil(65536 / 64)` × 8
+///     = 1024 × 8 = 8192 bytes = 2 pages.
+static mut BITMAP_STORAGE: [u64; TOTAL_FRAMES.div_ceil(64)] = [0u64; TOTAL_FRAMES.div_ceil(64)];
 
 // ─── Linker Symbols ─────────────────────────────────────────────────────────
 
 extern "C" {
+    /// End of the kernel BSS section (first byte after kernel image).
     static _bss_end: u8;
+    /// Start of the kernel heap (page-aligned, defined in linker.ld).
+    static _heap_start: u8;
+    /// End of the linker-script RAM region (start of free frames).
+    static _heap_end: u8;
 }
 
 // ─── Initialization ─────────────────────────────────────────────────────────
@@ -396,21 +385,42 @@ extern "C" {
 /// Must be called exactly once, early in boot, before any `alloc_frame()`
 /// calls. Marks the following regions as reserved (used):
 ///
-/// 1. Physical RAM below the kernel's BSS end (firmware, kernel code/data)
-/// 2. MMIO regions (UART, CLINT, PLIC) — if within managed range
-/// 3. The PMA bitmap itself
+/// 1. Kernel image: `RAM_START` → `_bss_end` (code, rodata, data, stack, BSS)
+/// 2. Kernel heap: `_heap_start` → `_heap_end` (the region handed to
+///    `linked_list_allocator`). **This is critical:** page-table frames
+///    allocated by the VMM come from the PMA — if the heap were not
+///    reserved, the first page-table allocations would land inside the
+///    heap and corrupt its free-list metadata.
+/// 3. Frames above the linker-script RAM end (up to physical RAM end) stay
+///    free — they are real RAM (QEMU `-m 256M`) not covered by the heap,
+///    and are used for page tables and future allocations.
 ///
 /// # Safety
 ///
-/// Called once from `kernel_main`. Reads linker symbols (`_bss_end`)
-/// and initializes the global `PMA` and `BITMAP_STORAGE` statics.
+/// Called once from `kernel_main`. Reads linker symbols and takes the
+/// one-time mutable borrow of `BITMAP_STORAGE`.
 pub fn init() {
     // SAFETY: `_bss_end` is a linker symbol placed at the end of the BSS
     // section. Its address is the first free byte after kernel data.
-    let bss_end = unsafe {(&_bss_end as *const u8) as usize };
+    let bss_end = unsafe { (&_bss_end as *const u8) as usize };
 
     // Align BSS end up to the next page boundary for the kernel heap start.
     let kernel_end = (bss_end + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
+
+    // Heap region from the linker script.
+    // SAFETY: linker-defined symbols; addresses are constant after link.
+    let heap_start = unsafe { (&_heap_start as *const u8) as usize };
+    let heap_end = unsafe { (&_heap_end as *const u8) as usize };
+    assert!(
+        heap_start == kernel_end,
+        "PMA: _heap_start {:#x} != aligned _bss_end {:#x}",
+        heap_start,
+        kernel_end
+    );
+    assert!(
+        heap_end > heap_start && heap_end % PAGE_SIZE == 0,
+        "PMA: bad heap bounds"
+    );
 
     // The managed region spans the entire physical RAM.
     let ram_end = RAM_START + RAM_SIZE;
@@ -422,52 +432,46 @@ pub fn init() {
 
     // SAFETY: We have exclusive access to BITMAP_STORAGE, the addresses are
     // valid for the QEMU virt memory map, and the bitmap is sized for TOTAL_FRAMES.
-    let mut pma = unsafe {
-        BitmapPma::new(bitmap_storage, RAM_START, ram_end)
-    };
+    let mut pma = unsafe { BitmapPma::new(bitmap_storage, RAM_START, ram_end) };
 
     // ─── Mark reserved regions ───────────────────────────────────────────
 
-    // 1. Reserve all frames from RAM start through kernel BSS end.
-    //    This covers: firmware area, kernel .text, .rodata, .data, .stack, .bss.
-    //    Note: MMIO regions (UART, CLINT, PLIC) are BELOW RAM_START (0x8000_0000)
-    //    so they are outside our managed range and don't need explicit marking.
+    // 1. Kernel image: RAM start through BSS end (page-aligned).
     let kernel_frames = (kernel_end - RAM_START) / PAGE_SIZE;
     pma.mark_used_range(0, kernel_frames);
 
-    // 2. Reserve the PMA bitmap's own physical frames.
-    //    The bitmap is stored in BSS (within the kernel region already reserved
-    //    above), but we verify the accounting is correct.
-    let bitmap_addr = unsafe { core::ptr::addr_of!(BITMAP_STORAGE) } as usize;
-    let bitmap_size = core::mem::size_of_val(unsafe { &BITMAP_STORAGE });
-    let bitmap_start_frame = (bitmap_addr - RAM_START) / PAGE_SIZE;
-    let bitmap_frame_count = (bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE;
-
-    // Bitmap should be within the already-reserved kernel region.
-    // This assertion verifies our layout is consistent.
-    assert!(
-        bitmap_start_frame + bitmap_frame_count <= kernel_frames,
-        "PMA bitmap extends beyond kernel reserved region: bitmap frames {}-{}, kernel frames 0-{}",
-        bitmap_start_frame,
-        bitmap_start_frame + bitmap_frame_count,
-        kernel_frames,
-    );
-
-    // Store into the global.
-    // SAFETY: PMA is a static Mutex<BitmapPma>. We initialize it here exactly
-    // once during boot, before any other code accesses it.
-    unsafe {
-        core::ptr::write(core::ptr::addr_of_mut!(PMA), Mutex::new(pma));
-    }
+    // 2. Kernel heap: heap_start..heap_end. Overlaps nothing above because
+    //    heap_start == kernel_end.
+    let heap_frames = (heap_end - heap_start) / PAGE_SIZE;
+    pma.mark_used_range(kernel_frames, heap_frames);
 
     // Print initialization info.
-    let stats = PMA.lock().stats();
+    let bitmap_addr = core::ptr::addr_of!(BITMAP_STORAGE) as usize;
+    let bitmap_size = core::mem::size_of_val(unsafe { &*core::ptr::addr_of!(BITMAP_STORAGE) });
+    let stats = pma.stats();
     crate::println!("  [pma] Physical memory allocator initialized");
-    crate::println!("  [pma]   RAM: {:#x} - {:#x} ({} MiB)", RAM_START, ram_end, RAM_SIZE / (1024 * 1024));
-    crate::println!("  [pma]   Frames: {} total, {} used, {} free",
-        stats.total_frames, stats.used_frames, stats.free_frames);
-    crate::println!("  [pma]   Bitmap: {} bytes at {:#x}",
-        bitmap_size, bitmap_addr);
+    crate::println!(
+        "  [pma]   RAM: {:#x} - {:#x} ({} MiB)",
+        RAM_START,
+        ram_end,
+        RAM_SIZE / (1024 * 1024)
+    );
+    crate::println!(
+        "  [pma]   Frames: {} total, {} reserved (kernel {} + heap {}), {} free",
+        stats.total_frames,
+        stats.used_frames,
+        kernel_frames,
+        heap_frames,
+        stats.free_frames
+    );
+    crate::println!(
+        "  [pma]   Bitmap: {} bytes at {:#x}",
+        bitmap_size,
+        bitmap_addr
+    );
+
+    // Store into the global (one-time initialization).
+    *PMA.lock() = Some(pma);
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────────
@@ -476,18 +480,10 @@ pub fn init() {
 ///
 /// Returns the physical address of the allocated frame, or `None` if
 /// no free frames remain. The returned frame is page-aligned.
-///
-/// # Examples
-///
-/// ```ignore
-/// if let Some(frame) = pma::alloc_frame() {
-///     // Use the 4 KiB frame at `frame`
-/// } else {
-///     // Out of physical memory
-/// }
-/// ```
 pub fn alloc_frame() -> Option<PhysAddr> {
-    PMA.lock().alloc_frame()
+    let mut guard = PMA.lock();
+    let pma = guard.as_mut().expect("pma: alloc_frame before init()");
+    pma.alloc_frame()
 }
 
 /// Allocate `count` contiguous physical page frames.
@@ -495,37 +491,31 @@ pub fn alloc_frame() -> Option<PhysAddr> {
 /// Returns the base physical address of the contiguous region, or
 /// `None` if no suitable contiguous block exists.
 ///
-/// # Arguments
-///
-/// * `count` — Number of contiguous frames to allocate.
+/// Primary consumer: page-table page allocation for Sv39 (a page table
+/// is 512 entries × 8 bytes = exactly one frame, but contiguous runs are
+/// needed for multi-level table batching and future DMA).
 pub fn alloc_contiguous(count: usize) -> Option<PhysAddr> {
-    PMA.lock().alloc_contiguous(count)
+    let mut guard = PMA.lock();
+    let pma = guard.as_mut().expect("pma: alloc_contiguous before init()");
+    pma.alloc_contiguous(count)
 }
 
 /// Free a previously allocated physical page frame.
-///
-/// # Arguments
-///
-/// * `addr` — Physical address of the frame to free. Must be page-aligned
-///   and must have been previously allocated via `alloc_frame()` or
-///   `alloc_contiguous()`.
 ///
 /// # Panics
 ///
 /// Panics if the address is not within the managed range or the frame
 /// is already free.
 pub fn free_frame(addr: PhysAddr) {
-    PMA.lock().free_frame(addr);
+    let mut guard = PMA.lock();
+    let pma = guard.as_mut().expect("pma: free_frame before init()");
+    pma.free_frame(addr);
 }
 
 /// Free `count` contiguous physical page frames starting at `addr`.
-///
-/// # Arguments
-///
-/// * `addr` — Base physical address (must be page-aligned).
-/// * `count` — Number of frames to free.
 pub fn free_contiguous(addr: PhysAddr, count: usize) {
-    let mut pma = PMA.lock();
+    let mut guard = PMA.lock();
+    let pma = guard.as_mut().expect("pma: free_contiguous before init()");
     for i in 0..count {
         let frame_addr = PhysAddr(addr.0 + i * PAGE_SIZE);
         pma.free_frame(frame_addr);
@@ -534,19 +524,16 @@ pub fn free_contiguous(addr: PhysAddr, count: usize) {
 
 /// Get the current state of a physical frame.
 pub fn frame_state(addr: PhysAddr) -> FrameState {
-    PMA.lock().frame_state(addr)
+    let guard = PMA.lock();
+    let pma = guard.as_ref().expect("pma: frame_state before init()");
+    pma.frame_state(addr)
 }
 
 /// Get allocator statistics.
 pub fn stats() -> PmaStats {
-    PMA.lock().stats()
-}
-
-/// Get the physical address of the first frame available for allocation.
-///
-/// Returns `None` if no frames are available.
-pub fn first_free_frame() -> Option<PhysAddr> {
-    alloc_frame()
+    let guard = PMA.lock();
+    let pma = guard.as_ref().expect("pma: stats before init()");
+    pma.stats()
 }
 
 // ─── Unit Tests ─────────────────────────────────────────────────────────────
@@ -563,11 +550,16 @@ mod tests {
 
     /// Create a test allocator over a small static bitmap.
     fn create_test_pma() -> BitmapPma {
-        static mut TEST_BITMAP: [u64; (TEST_FRAMES + 63) / 64] =
-            [0u64; (TEST_FRAMES + 63) / 64];
+        static mut TEST_BITMAP: [u64; (TEST_FRAMES + 63) / 64] = [0u64; (TEST_FRAMES + 63) / 64];
+        // SAFETY: exclusive access to TEST_BITMAP for the duration of the test;
+        // tests run single-threaded on the host.
         unsafe {
             let bitmap = &mut *core::ptr::addr_of_mut!(TEST_BITMAP);
-            BitmapPma::new(bitmap, 0x1000_0000, 0x1000_0000 + TEST_FRAMES * TEST_PAGE_SIZE)
+            BitmapPma::new(
+                bitmap,
+                0x1000_0000,
+                0x1000_0000 + TEST_FRAMES * TEST_PAGE_SIZE,
+            )
         }
     }
 
@@ -601,7 +593,9 @@ mod tests {
         // Reserve first frame so allocation doesn't start at 0
         pma.mark_used(0);
 
-        let region = pma.alloc_contiguous(4).expect("should allocate 4 contiguous frames");
+        let region = pma
+            .alloc_contiguous(4)
+            .expect("should allocate 4 contiguous frames");
         assert_eq!(region, PhysAddr(0x1000_0000 + 1 * TEST_PAGE_SIZE));
 
         // Verify all 4 frames are marked used
@@ -666,8 +660,10 @@ mod tests {
         assert_eq!(addr.frame_number(), 0x8000_1234 / PAGE_SIZE);
         assert!(!addr.is_page_aligned());
         assert_eq!(addr.page_align_down(), PhysAddr(0x8000_1000));
+        assert_eq!(addr.page_align_up(), PhysAddr(0x8000_2000));
 
         let aligned = PhysAddr(0x8000_2000);
         assert!(aligned.is_page_aligned());
+        assert_eq!(aligned.page_align_up(), aligned);
     }
 }

@@ -2,16 +2,18 @@
 /// The first process spawned by the kernel after boot.
 /// Responsible for: setting up the environment, launching services,
 /// and handing off to the interactive shell.
-
 extern crate alloc;
 use alloc::vec::Vec;
 
-use crate::{print, println};
-use crate::process::ProcessId;
 use crate::fs::{create_dir, write_file};
+use crate::process::ProcessId;
 use crate::shell::Shell;
+use crate::{print, println};
 
 pub struct InitSystem {
+    /// This init's process ID (PID 1). Kept for the boot log and future
+    /// real process management (TD-006); not yet used for scheduling.
+    #[allow(dead_code)]
     pid: ProcessId,
     services: Vec<Service>,
 }
@@ -42,6 +44,7 @@ impl InitSystem {
 
     /// Entry point — called by kernel after all hardware is initialised
     pub fn run(&mut self) -> ! {
+        println!("  [init] init system starting (pid={})", self.pid.0);
         self.print_boot_banner();
         self.setup_filesystem();
         self.start_services();
@@ -96,11 +99,11 @@ impl InitSystem {
         println!("  [init] Starting core services...");
 
         let service_defs: &[(&'static str, bool)] = &[
-            ("memory-guard",  true),
+            ("memory-guard", true),
             ("capability-mgr", true),
-            ("entropy-pool",   true),
+            ("entropy-pool", true),
             ("device-manager", false),
-            ("logger",         false),
+            ("logger", false),
         ];
 
         for &(name, critical) in service_defs {
@@ -137,12 +140,12 @@ impl InitSystem {
         // Services are simulated with hardcoded PIDs.
         // See docs/ROADMAP.md → M3 for real init process implementation.
         match name {
-            "memory-guard"   => Ok(ProcessId(2)),
+            "memory-guard" => Ok(ProcessId(2)),
             "capability-mgr" => Ok(ProcessId(3)),
-            "entropy-pool"   => Ok(ProcessId(4)),
+            "entropy-pool" => Ok(ProcessId(4)),
             "device-manager" => Ok(ProcessId(5)),
-            "logger"         => Ok(ProcessId(6)),
-            _                => Err("unknown service"),
+            "logger" => Ok(ProcessId(6)),
+            _ => Err("unknown service"),
         }
     }
 
@@ -156,8 +159,21 @@ impl InitSystem {
     fn kernel_panic(&self, service: &str) -> ! {
         println!("");
         println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        println!("  KERNEL PANIC: critical service '{}' failed to start", service);
+        println!(
+            "  KERNEL PANIC: critical service '{}' failed to start",
+            service
+        );
         println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        loop { unsafe { core::arch::asm!("wfi"); } }
+        loop {
+            unsafe {
+                core::arch::asm!("wfi");
+            }
+        }
+    }
+}
+
+impl Default for InitSystem {
+    fn default() -> Self {
+        Self::new()
     }
 }
