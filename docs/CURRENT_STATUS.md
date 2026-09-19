@@ -11,7 +11,7 @@
 
 SurakshaOS is a **bare-metal RISC-V kernel prototype** that boots on QEMU, transitions from M-mode to S-mode, initializes a UART console, sets up Sv39 virtual memory with per-process address spaces, provides an in-memory filesystem, and runs an interactive shell. The kernel runs in **S-mode** (supervisor), with a minimal M-mode handler for timer interrupts and the ecall bridge. This is a **very early prototype**.
 
-No feature listed in the README as "Implemented" is fully real. The kernel boots and runs a shell, but there is no process management, no user/kernel mode split, no capability system, no cryptographic implementation, and no hardware abstraction beyond the UART.
+No feature listed in the README as "Implemented" is fully real. The kernel boots and runs a shell, but there is no user/kernel mode split, no capability system, no cryptographic implementation, and no hardware abstraction beyond the UART. **M2.1 update:** a real process/thread model now exists — real PCBs with enforced lifecycle states, per-thread kernel stacks, assembly context switching (verified: two kernel tasks alternate through 10 real switches per boot), a synchronized process table, and a real `ps`. Still missing: preemption (M2.2) and U-mode userland (M2.3).
 
 ---
 
@@ -86,7 +86,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 | Process table | **MISSING** | No table, no PCB, no process states. |
 | Process lifecycle (create/run/exit/wait) | **MISSING** | |
 | Parent/child relationships | **MISSING** | |
-| Process isolation | **PARTIALLY IMPLEMENTED** | Per-process AddressSpace API with create/switch/destroy. Kernel mappings cloned to each space. No S-mode/U-mode split yet. |
+| Process isolation | **M2.1: REAL PROCESS/THREAD MODEL (verified)** | PCB with enforced lifecycle, per-thread owned 64 KiB kernel stacks, callee-saved scheduler contexts, cooperative round-robin switching in assembly, synchronized process table, AddressSpace lifecycle (enum-enforced ownership). Two-task A/B context-switch proof: 10 real switches/boot in QEMU. `ps` shows the real table; `ktest` runs 9 in-kernel self-tests. No preemption/U-mode yet (M2.2/M2.3). See docs/PROCESS_MODEL.md + docs/adr/ADR-0002. |
 | Resource accounting | **MISSING** | |
 | Process groups | **MISSING** | |
 
@@ -129,7 +129,7 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 |-----------|--------|-------|
 | Command parsing | **PARTIALLY IMPLEMENTED** | Simple whitespace splitting. No quoting, no escaping, no globbing. |
 | Built-in commands | **PARTIALLY IMPLEMENTED** | `ls`, `cd`, `pwd`, `cat`, `echo`, `mkdir`, `rm`, `touch`, `write`, `ps`, `mem`, `uptime`, `uname`, `env`, `export`, `history`, `clear`, `reboot`, `halt`, `about`. Functional against in-memory VFS. |
-| `ps` command | **SIMULATED** | Prints hardcoded process table. No real processes exist. |
+| `ps` command | **IMPLEMENTED** | Prints the real process table (PID/PPID/STATE/THR/NAME) from the synchronized registry. Only real processes appear. |
 | `mem` command | **IMPLEMENTED** | Reports both PMA frame stats and heap usage with visual bars. |
 | `uptime` command | **IMPLEMENTED** | Reads CLINT mtime directly. |
 | `uname` command | **IMPLEMENTED** | Returns hardcoded string. |
@@ -278,17 +278,16 @@ No feature listed in the README as "Implemented" is fully real. The kernel boots
 
 ## What Does NOT Work
 
-1. No real processes — everything is one call stack
-2. No scheduler — no preemption, no task switching
-3. No per-process address spaces — kernel uses Sv39 but no user/kernel separation
-4. No U-mode — all code runs in S-mode or M-mode
+1. No preemptive scheduler — switching is cooperative (`yield_now`); timer-driven preemption is M2.2
+2. No U-mode — all code runs in S-mode or M-mode; userland is M2.3
+3. No fork/exec — kernel tasks are created directly with an entry function
+4. No per-process `satp` switching in the scheduler path yet (AddressSpace ownership exists, activation is M2.3)
 5. No persistent storage — all data lost on reboot
-5. No real capability system
-6. No cryptography
-7. No networking
-8. No device drivers beyond UART
-9. No user/kernel mode separation
-10. No tests
+6. No real capability system
+7. No cryptography
+8. No networking
+9. No device drivers beyond UART
+10. Boot context is not yet a managed thread (TD-026); init services are not processes (TD-025)
 11. No CI
 12. No real documentation
 

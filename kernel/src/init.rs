@@ -44,14 +44,41 @@ impl InitSystem {
 
     /// Entry point — called by kernel after all hardware is initialised
     pub fn run(&mut self) -> ! {
+        // Register this execution as the real PID 1 in the process table.
+        // (The boot context itself is not yet a managed thread — TD-026.)
+        crate::process::register_boot_process("init");
+
         println!("  [init] init system starting (pid={})", self.pid.0);
         self.print_boot_banner();
         self.setup_filesystem();
         self.start_services();
+        self.run_process_demo();
         self.print_ready();
         // Hand off to the interactive shell — never returns
         let mut shell = Shell::new();
         shell.run()
+    }
+
+    /// M2.1 proof: create two real kernel-task processes, let their threads
+    /// context-switch on the hart via the real scheduler, and show `ps`.
+    /// Runs once, bounded, before the interactive shell starts.
+    fn run_process_demo(&self) {
+        const ITERATIONS: usize = 5;
+        println!("");
+        println!(
+            "  [init] M2.1 context-switch proof ({} iterations):",
+            ITERATIONS
+        );
+        let _ = crate::process::spawn_demo_tasks(ITERATIONS);
+        // Drive the scheduler from the boot context until the run queue is
+        // empty. Every A/B line below is printed by a real thread resuming
+        // on its own kernel stack through a real context switch.
+        crate::process::run_until_idle();
+        println!(
+            "  [init] proof complete: {} context switches, {} processes reaped",
+            crate::process::switch_count(),
+            crate::process::reap_exited(),
+        );
     }
 
     fn print_boot_banner(&self) {
@@ -136,9 +163,10 @@ impl InitSystem {
     }
 
     fn start_service(&self, name: &str, _critical: bool) -> Result<ProcessId, &'static str> {
-        // NOTE: This is a STUB. No real processes are spawned.
-        // Services are simulated with hardcoded PIDs.
-        // See docs/ROADMAP.md → M3 for real init process implementation.
+        // NOTE: Services are still in-kernel subsystems, not processes.
+        // They are recorded in the boot log only; the PIDs shown are NOT
+        // registered in the process table (no process exists for them yet).
+        // Converting services to real processes is M3 work.
         match name {
             "memory-guard" => Ok(ProcessId(2)),
             "capability-mgr" => Ok(ProcessId(3)),

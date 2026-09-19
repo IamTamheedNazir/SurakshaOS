@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use crate::console::read_line;
 use crate::fs::{create_dir, list_dir, read_file, remove_file, stat, write_file};
 use crate::memory::{heap_total, heap_used, pma_stats};
-use crate::process::uptime_ms;
+use crate::process::{enumerate as proc_enumerate, uptime_ms};
 use crate::{print, println};
 
 const SHELL_VERSION: &str = "0.2.0";
@@ -127,6 +127,11 @@ const BUILTINS: &[BuiltIn] = &[
         name: "clear",
         usage: "clear",
         help: "Clear the terminal",
+    },
+    BuiltIn {
+        name: "ktest",
+        usage: "ktest",
+        help: "Run kernel self tests",
     },
     BuiltIn {
         name: "reboot",
@@ -265,6 +270,7 @@ impl Shell {
             "touch" => self.cmd_touch(args),
             "write" => self.cmd_write(args),
             "ps" => self.cmd_ps(),
+            "ktest" => self.cmd_ktest(),
             "mem" => self.cmd_mem(),
             "uptime" => self.cmd_uptime(),
             "uname" => self.cmd_uname(),
@@ -456,14 +462,39 @@ impl Shell {
     }
 
     fn cmd_ps(&self) -> i32 {
-        println!("  PID   NAME               STATUS         MODE");
-        println!("  ────  ─────────────────  ────────       ─────");
-        println!("  1     init               running        S-mode");
-        println!("");
-        println!("  [NOTE] No real process management exists yet.");
-        println!("  All processes currently run on the kernel stack in S-mode.");
-        println!("  See docs/ROADMAP.md → M2 for process implementation plan.");
+        // Real process table — no simulated entries. PID 1 is the boot
+        // execution (init); kernel tasks created by the M2.1 demo/tests
+        // appear here with their true lifecycle state.
+        let procs = proc_enumerate();
+        if procs.is_empty() {
+            println!("  [ps] process table is empty (kernel bug — init should exist)");
+            return 1;
+        }
+        println!("  PID   PPID   STATE     THR   NAME");
+        println!("  ────  ────   ───────   ───   ──────────────");
+        for p in procs {
+            let ppid = p
+                .ppid
+                .map(|v| alloc::format!("{}", v))
+                .unwrap_or_else(|| "-".to_string());
+            println!(
+                "  {:<4}  {:<4}   {:<7}   {:<3}   {}",
+                p.pid, ppid, p.state, p.threads, p.name
+            );
+        }
         0
+    }
+
+    fn cmd_ktest(&self) -> i32 {
+        println!("  [ktest] running kernel self tests...");
+        let fails = crate::process::run_self_tests();
+        if fails == 0 {
+            println!("  [ktest] ALL TESTS PASSED");
+            0
+        } else {
+            println!("  [ktest] {} test(s) FAILED", fails);
+            1
+        }
     }
 
     fn cmd_mem(&self) -> i32 {

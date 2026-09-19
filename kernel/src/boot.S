@@ -442,3 +442,90 @@ _m_trap_entry:
 _park:
     wfi
     j       _park
+
+/* ════════════════════════════════════════════════════════════════════════
+ * Cooperative scheduler context switch (M2.1)
+ *
+ * SwitchContext — the SCHEDULER context, deliberately separate from the
+ * interrupt/trap context saved by _s_trap_entry. It holds only the
+ * RISC-V ABI callee-saved state, i.e. exactly what a C/Rust function is
+ * entitled to assume survives a call:
+ *
+ *   offset 0    : ra   — return address: where this thread resumes
+ *   offset 8    : sp   — its dedicated kernel stack top
+ *   offset 16.. : s0-s11 — callee-saved registers (12 x 8 bytes)
+ *
+ * Why only these registers?
+ *   - ra/sp: the minimum to resume a suspended call chain (sp must be
+ *     restored or the thread's locals/frames are unreachable; ra directs
+ *     the resume point).
+ *   - s0-s11: the ABI says caller-saved registers are dead across a call,
+ *     and switch_to() IS a call — so a thread must keep its own copy of
+ *     anything it needs long-term in s-registers. Caller-saved (t/a)
+ *     registers need no storage: the switcher respects the ABI and does
+ *     not touch s-registers before restoring them.
+ *   - gp/tp: global/thread pointers are kernel-wide constants in this
+ *     kernel (kernel tasks share one address space), so they never differ
+ *     between threads yet and need not be switched.
+ *
+ * Layout must match SwitchContext in process.rs (8 * 14 = 112 bytes).
+ * ════════════════════════════════════════════════════════════════════════ */
+.section .text
+.balign 4
+.globl switch_context_asm
+switch_context_asm:
+    /* a0 = &from.context, a1 = &to.context */
+    sd      ra,   0(a0)
+    sd      sp,   8(a0)
+    sd      s0,  16(a0)
+    sd      s1,  24(a0)
+    sd      s2,  32(a0)
+    sd      s3,  40(a0)
+    sd      s4,  48(a0)
+    sd      s5,  56(a0)
+    sd      s6,  64(a0)
+    sd      s7,  72(a0)
+    sd      s8,  80(a0)
+    sd      s9,  88(a0)
+    sd      s10, 96(a0)
+    sd      s11, 104(a0)
+
+    ld      ra,   0(a1)
+    ld      sp,   8(a1)
+    ld      s0,  16(a1)
+    ld      s1,  24(a1)
+    ld      s2,  32(a1)
+    ld      s3,  40(a1)
+    ld      s4,  48(a1)
+    ld      s5,  56(a1)
+    ld      s6,  64(a1)
+    ld      s7,  72(a1)
+    ld      s8,  80(a1)
+    ld      s9,  88(a1)
+    ld      s10, 96(a1)
+    ld      s11, 104(a1)
+    ret
+
+/* ════════════════════════════════════════════════════════════════════════
+ * First dispatch onto a brand-new thread's context.
+ *
+ * The new context is prepared in Rust so that:
+ *   ctx.ra = thread_trampoline, ctx.sp = kernel stack top,
+ *   ctx.s0 = entry function, ctx.s1 = argument, ctx.s2 = &Thread (owner)
+ *
+ * switch_context_asm restores ra/sp/s0-s11 and returns here — now running
+ * ON the new thread's own kernel stack. Entry/arg/owner arrive via the
+ * restored s0-s2 (robust: they come from the saved context, not from
+ * whatever the switcher happened to leave in a/t registers).
+ *
+ * Calls s0(s1); if the entry function ever returns, runs the exit hook
+ * with s2 = owner thread, so a returning thread can never fall off its
+ * stack and wander through memory.
+ * ════════════════════════════════════════════════════════════════════════ */
+.balign 4
+.globl thread_trampoline
+thread_trampoline:
+    mv      a0, s1
+    jalr    s0
+    mv      a0, s2
+    tail    thread_exit_hook

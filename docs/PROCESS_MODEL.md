@@ -1,13 +1,25 @@
 # SurakshaOS — Process Model
 
-**Status:** PLANNED — not yet implemented  
-**Current milestone:** M2 (Real Kernel)
+**Status:** M2.1 IMPLEMENTED (cooperative kernel tasks, hardware-verified)  
+**Current milestone:** M2.2 (Preemptive Scheduler) → M2.3 (First U-mode Process)
 
 ---
 
 ## Overview
 
-SurakshaOS will implement a preemptive multitasking process model with kernel and user threads, per-process address spaces, and a priority-based scheduler.
+SurakshaOS implements a real process/thread execution model: processes own
+resources (address space, exit status), threads are the schedulable entities
+with dedicated kernel stacks, and the scheduler performs cooperative
+round-robin context switches preserving the RISC-V ABI callee-saved state.
+
+M2.1 (this document's implemented baseline) proves the model with two kernel
+tasks alternating `A/B/A/B...` through real saved/restored contexts
+(10+ switches per boot, verified in QEMU — see `docs/M1_VERIFICATION.md`
+and `kernel/src/process.rs::spawn_demo_tasks`).
+
+What is NOT yet implemented (honest status): preemption (timer-driven),
+U-mode userland, per-process `satp` switching in the scheduler path, and
+fork/exec. These are M2.2/M2.3.
 
 ---
 
@@ -260,3 +272,86 @@ Standard signals (subset):
 | SIGCHLD | 17 | Ignore | Child exited |
 | SIGSTOP | 19 | Stop (uncatchable) | Stop process |
 | SIGCONT | 18 | Continue | Continue stopped process |
+
+---
+
+## M2.1 Implemented Architecture (as built)
+
+### Data Structures (kernel/src/process.rs)
+
+| Structure | Purpose |
+|-----------|---------|
+| `ProcessId` / `ThreadId` | Monotonic, never-reused identifiers. TID 0 = boot context. |
+| `SwitchContext` | Scheduler context: `ra, sp, s0-s11` (14 × 8 bytes, `#[repr(C)]`, layout asserted to match `switch_context_asm` in boot.S). |
+| `KernelStack` | Per-thread owned stack: 16 contiguous PMA frames (64 KiB), page-aligned, freed on `Drop` at reap. |
+| `Thread` | `tid, owner_pid, state, context, stack, entry, name`. Prepared context for new threads: `ra=thread_trampoline`, `sp=stack top`, `s0/s1/s2 = entry/arg/owner`. |
+| `Process` | `pid, parent_pid, state, name, space, threads, exit_status, created_ms, yield_count`. |
+| `ProcessSpace` | `Kernel` (shared, never freed) or `Owned(Box<AddressSpace>)` (freed at reap). The enum makes freeing the shared kernel space impossible by construction. |
+| `TableInner` (in `static TABLE: Mutex<...>`) | Process table + PID/TID allocators. spin::Mutex, same convention as PMA/VMM/VFS. |
+
+### Process States (implemented)
+
+```
+New ──▶ Ready ──▶ Running ──┐
+          ▲                 │ (all threads exited)
+          │  yield/preempt  ▼
+          └────────────── Zombie ──(reap_exited)──▶ removed
+```
+
+Transitions are enforced by `set_state()`; illegal ones return
+`ProcError::InvalidTransition`. Zombie is terminal (no resurrection).
+
+### Thread States (implemented)
+
+`New → Ready → Running → Exited`, plus `Blocked` (reserved for M2.2
+blocking). An `Exited` thread is never re-marked `Ready` — schedule()
+checks and refuses.
+
+### Context Switch (cooperative)
+
+```
+yield_now()/schedule()
+  ├─ TABLE.lock(): pick next Ready thread (round-robin after current TID)
+  ├─ save current's callee-saved regs into its SwitchContext
+  │    (boot context → BOOT_CONTEXT static; Exited threads are skipped)
+  ├─ mark from-thread Ready (unless Exited), to-thread Running
+  ├─ CURRENT_TID ← next;  DROP TABLE lock (single-hart; see TD-027)
+  └─ switch_context_asm: restore next's ra/sp/s0-s11, ret
+       first dispatch: ra = thread_trampoline → entry(s0)(s1)
+       entry returns → thread_exit_hook: thread Exited, process Zombie,
+                       schedule away forever (stack freed at reap)
+```
+
+### Why the scheduler context is separate from the trap context
+
+The trap frame (`_s_trap_entry`, 256 bytes) exists only *inside* a trap;
+the scheduler context is the persistent identity of a suspended thread.
+They serve different purposes and different code paths; conflating them is
+how double-save bugs happen. M2.2 preemption will store a trap frame on the
+interrupted thread's kernel stack and a pointer to it, not merge the two
+structures.
+
+### Register justification (switch_context_asm)
+
+| Register | Saved | Why |
+|----------|-------|-----|
+| `ra` | yes | Resume point (`ret` target). |
+| `sp` | yes | Stack identity; without it no frame is reachable. |
+| `s0-s11` | yes | ABI callee-saved — a thread's long-lived values; `switch_to` is a call. |
+| `t0-t6`, `a0-a7` | no | ABI caller-saved: dead across the switch call. |
+| `gp`, `tp` | no | Kernel-wide constants for kernel tasks (revisit for U-mode `tp`). |
+
+### Locking and the switch window (TD-027)
+
+The table lock is dropped before the register switch. Safe today because
+the boot hart is the only executor and no trap handler locks the table.
+M2.2 must introduce a per-hart scheduler lock held across the switch and
+released by the resuming thread (standard pattern) before any SMP or
+table-locking trap handler lands.
+
+### Kernel stack overflow strategy
+
+M2.1 stacks are physically contiguous PMA frames, not page-table mappings,
+so MMU guard pages cannot be enforced yet. M2.2 will map thread stacks with
+an unmapped guard page below; overflow then page-faults into a clean thread
+kill. Tracked as TD-028.

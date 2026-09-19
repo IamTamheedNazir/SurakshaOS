@@ -73,28 +73,29 @@
 
 ### P0 — Process Model
 
-- [ ] **Process Control Block (PCB)** — full process structure with AddressSpace field
-- [ ] **Process states** — Created, Ready, Running, Waiting, Zombie, Dead
-- [ ] **Process creation** — fork/exec equivalent
-- [ ] **Process destruction** — exit, wait, cleanup
-- [ ] **Process table** — indexed by PID
-- [ ] **Parent/child relationships**
-- [ ] **Process isolation** — via separate page tables
+- [x] **Process Control Block (PCB)** — real Process struct with ProcessSpace field (M2.1, kernel/src/process.rs)
+- [x] **Process states** — New, Ready, Running, Blocked, Zombie, Dead with enforced transitions (M2.1)
+- [ ] **Process creation** — fork/exec equivalent (M2.1 has direct `create_kernel_task`; fork/exec in M2.3+)
+- [x] **Process destruction** — exit hook → Zombie → reap_exited frees stacks + private spaces (M2.1)
+- [x] **Process table** — synchronized Mutex registry with create/lookup/enumerate/set_state/reap (M2.1)
+- [x] **Parent/child relationships** — parent_pid recorded and validated (M2.1); wait() syscall M2.3
+- [ ] **Process isolation** — via separate page tables (ownership exists; activation M2.3)
 
 ### P0 — Context Switching
 
-- [ ] **Full register save/restore** — all 33 GP regs + CSRs
-- [ ] **Per-process kernel stack**
-- [ ] **Switch between user processes** — save user context, switch page table, restore
-- [ ] **Timer preemption** — scheduler tick from timer interrupt
+- [x] **Scheduler context save/restore** — callee-saved ra/sp/s0-s11 via switch_context_asm; trap frames remain separate (M2.1)
+- [x] **Per-thread kernel stack** — owned 64 KiB contiguous PMA allocation, freed at reap (M2.1; guard pages TD-028)
+- [x] **Cooperative switch proof** — two kernel tasks alternate A/B through 10 real switches/boot, verified in QEMU (M2.1)
+- [ ] **Switch between user processes** — save user context, switch page table, restore (M2.3)
+- [ ] **Timer preemption** — scheduler tick from timer interrupt (M2.2)
 
 ### P0 — Scheduler
 
-- [ ] **Run queue** — linked list of ready processes
-- [ ] **Process states in scheduler**
-- [ ] **Preemptive scheduling** — round-robin initially
-- [ ] **Sleep/wakeup** — blocking on I/O or events
-- [ ] **CPU idle** — when no process is ready
+- [x] **Run queue** — implicit round-robin over the table's Ready threads, fair rotation after current TID (M2.1; explicit queue M2.2)
+- [x] **Process states in scheduler** — enforced lifecycle drives scheduling (M2.1)
+- [ ] **Preemptive scheduling** — round-robin via timer tick (M2.2; cooperative round-robin works now)
+- [ ] **Sleep/wakeup** — blocking on I/O or events (M2.2; Blocked state reserved)
+- [ ] **CPU idle** — when no process is ready (M2.2; boot-context resume works now)
 - [ ] **Priority levels** (basic)
 
 ### P0 — Syscalls
@@ -273,7 +274,7 @@
 |-----------|--------|--------|
 | M0 — Bootable Prototype | ✅ Complete | Done |
 | M1 — Correct Kernel | ✅ Verified | Hardware-verified on QEMU (see docs/M1_VERIFICATION.md) |
-| M2 — Real Kernel | ⏳ Pending | After M1 |
+| M2 — Real Kernel | 🔄 M2.1 Done | Process/thread foundation verified; next M2.2 preemption |
 | M3 — Persistent OS | ⏳ Pending | After M2 |
 | M4 — Secure OS | ⏳ Pending | After M3 |
 | M5 — Networked OS | ⏳ Pending | After M4 |

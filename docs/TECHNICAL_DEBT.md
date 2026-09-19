@@ -180,6 +180,69 @@
 - **Fix:** Implement proper path resolution with `.` and `..`.
 - **Severity:** LOW
 
+### TD-024: Stale TD entries (updated 2026-09-19)
+- **Issue:** TD-001/002/003/004 and TD-020 describe the pre-M1 state and
+  are now resolved (full trap save/restore, classified mepc handling, S-mode
+  kernel, Sv39 VMM, synchronized statics). Kept for history; superseded by
+  docs/M1_VERIFICATION.md.
+- **Severity:** INFO
+
+### TD-025: Init Services Are Not Processes
+- **File:** `kernel/src/init.rs`
+- **Issue:** The five boot services print PIDs 2–6 but are in-kernel
+  subsystem calls; no Process exists for them and those PIDs are not in the
+  process table. `ps` shows only real processes (so services do not appear).
+- **Impact:** `ps` output is honest but incomplete vs the boot log.
+- **Fix:** Convert services to real kernel-task processes in M3.
+- **Severity:** MEDIUM
+
+### TD-026: Boot Context Is Not a Managed Thread
+- **File:** `kernel/src/process.rs` (BOOT_CONTEXT, BOOT_TID)
+- **Issue:** The shell/init execution runs on the global boot stack from
+  boot.S with a saved boot `SwitchContext`, but it is not a `Thread` in the
+  table (init shows THR=0).
+- **Impact:** Slight asymmetry: the boot context cannot block/yield like a
+  normal thread; scheduling to it is special-cased.
+- **Fix:** Convert the boot execution into the init process's main thread
+  (thread 0 → init's TID) in M2.2.
+- **Severity:** MEDIUM
+
+### TD-027: Scheduler Lock Window (pre-SMP constraint)
+- **File:** `kernel/src/process.rs::schedule`
+- **Issue:** The table lock is dropped before the register switch. Safe
+  only because the boot hart is the sole executor and no trap handler locks
+  the process table.
+- **Impact:** Blocks SMP (M2.2+) and any trap handler that must touch the
+  table (e.g. timer-driven preemption needs care).
+- **Fix:** Per-hart scheduler lock held across the switch, released by the
+  resuming thread. Required before SMP or preempting handlers.
+- **Severity:** HIGH (gating M2.2)
+
+### TD-028: No Kernel-Stack Guard Pages
+- **File:** `kernel/src/process.rs` (KernelStack)
+- **Issue:** Thread stacks are contiguous PMA frames, not page-table
+  mappings; the MMU cannot trap on overflow.
+- **Impact:** A stack overflow corrupts adjacent frames silently.
+- **Fix:** M2.2: map thread stacks into the kernel region with an unmapped
+  guard page below; overflow page-faults into a clean thread kill.
+- **Severity:** HIGH
+
+### TD-029: Cooperative Only
+- **Issue:** `schedule()` runs from `yield_now()` only. A thread in a long
+  loop without yields starves everything else (mitigated today because all
+  kernel tasks yield by design).
+- **Fix:** M2.2 timer-driven preemption through the delegated timer.
+- **Severity:** HIGH (defining M2.2)
+
+### TD-030: Test Infrastructure Is In-Kernel Only
+- **Issue:** `no_std` + RISC-V boot assembly means `cargo test` cannot run
+  kernel logic on the host; tests live in `run_self_tests()` behind the
+  `ktest` shell command (executed in QEMU).
+- **Fix:** Long-term: split architecture-independent logic (PID allocator,
+  state machine) into a `no_std` lib crate testable on the host, keeping
+  arch-specific parts (`asm!`, stacks) in the binary crate.
+- **Severity:** MEDIUM
+
 ---
 
 ## Summary
